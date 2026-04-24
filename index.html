@@ -277,10 +277,12 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
         <label>產品類型 <span class="required">*</span></label>
         <select id="productType" name="product_type" required onchange="onProductChange()">
           <option value="">請選擇</option>
-          <option selected>第六代紅光控制器</option>
-          <option>紅光衣</option>
-          <option>智慧手錶</option>
-          <option>宏碁指環</option>
+          <option value="gen6" selected>第六代紅光控制器</option>
+          <option value="gen4">第四代紅光</option>
+          <option value="nc108">居家：NC108</option>
+          <option value="sanyi">居家：三合一</option>
+          <option value="watch">智慧手錶</option>
+          <option value="ring">宏碁指環</option>
         </select>
       </div>
       <div class="field">
@@ -317,7 +319,17 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 <section class="section" id="sec1">
   <div class="card">
     <div class="card-head"><div class="card-icon">🧪</div><div><div class="card-title">QC 測試項目</div><div class="card-sub">紅色 <span style="color:var(--danger);font-weight:700">關鍵</span> 項目 NG → 自動判定 FAIL</div></div></div>
-    <div id="testBlocks"></div>
+    <div id="testSetNotice" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;background:var(--g50);border:2px dashed var(--border);border-radius:14px;margin-bottom:16px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">🚧</div>
+        <div style="font-size:18px;font-weight:900;color:var(--g700);margin-bottom:8px">
+          <span id="noticeProductName"></span> 測試項目建置中
+        </div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.8">
+          此產品的 QC 測試表單尚未建立<br>
+          請聯繫 QC 負責人補充測試項目後上線
+        </div>
+      </div>
+      <div id="testBlocks"></div>
   </div>
   <div class="actions">
     <button class="btn btn-ghost" onclick="goSection(0)">← 上一步</button>
@@ -396,7 +408,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
       <div class="stat"><div class="stat-label">總項目</div><div class="stat-val" id="totalCount" style="color:var(--text)">─</div></div>
       <div class="stat stat-ok"><div class="stat-label">OK</div><div class="stat-val" id="okCount">─</div></div>
       <div class="stat stat-ng"><div class="stat-label">NG</div><div class="stat-val" id="ngCount">─</div></div>
-      <div class="stat stat-warn"><div class="stat-label">N/A</div><div class="stat-val" id="naCount">─</div></div>
+      <div class="stat stat-warn"><div class="stat-label">未測試</div><div class="stat-val" id="naCount">─</div></div>
       <div class="stat"><div class="stat-label">完成率</div><div class="stat-val stat-primary" id="completePct" style="color:var(--primary)">─</div></div>
     </div>
     <div style="text-align:center;padding:8px 0 20px">
@@ -453,72 +465,208 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 // ════════════════════════════════════════════════
 // 測試項目資料
 // ════════════════════════════════════════════════
-const TEST_BLOCKS = [
-  {
-    id: 'A', label: 'A. 外觀檢查', icon: '👁️',
-    items: [
-      {no:'A-01', name:'外觀無明顯瑕疵（污漬、破裂、縫隙過大）', critical:false, light:'─', voice:'─'},
-      {no:'A-02', name:'背帶連接處鎖緊', critical:false, light:'─', voice:'─'},
-      {no:'A-03', name:'插頭可插到底、無接觸不良', critical:true,  light:'─', voice:'─'},
-    ]
-  },
-  {
-    id: 'B', label: 'B. 開關機', icon: '🔌',
-    items: [
-      {no:'B-01', name:'長按電源鍵約 3 秒 → 正常開機', critical:true,  light:'綠燈恆亮', voice:'開機音效'},
-      {no:'B-02', name:'長按電源鍵約 3 秒 → 正常關機', critical:true,  light:'燈滅',   voice:'關機音效'},
-      {no:'B-03', name:'拔除電池再裝上開機，有語音提示（韌體/軟體連線）', critical:true, light:'紅燈', voice:'「系統需要重新設定，請開啟藍芽與軟體連線」'},
-    ]
-  },
-  {
-    id: 'C', label: 'C. APP 藍芽連線', icon: '📡',
-    items: [
-      {no:'C-01', name:'APP 陪伴旅程 >> 開始穿衣 >> 第六代紅光極致衣 >> 下一步 >> 裝置配對（選對應藍芽名稱）', critical:true, light:'─', voice:'─'},
-      {no:'C-02', name:'按「開始」開始治療，貼片亮紅燈', critical:true, light:'白燈恆亮', voice:'「開始使用」'},
-      {no:'C-03', name:'按「暫停」，貼片不亮紅燈，切換為暫停', critical:true, light:'白燈閃爍', voice:'「暫停使用」'},
-      {no:'C-04', name:'調整音量後按「暫停」跟「開始」確認音量可調整', critical:false, light:'─', voice:'─'},
-      {no:'C-05', name:'連續使用至 60 分鐘療程完成，一分鐘後自動關機', critical:true, light:'關機/燈滅', voice:'「結束使用」+ 關機音效'},
-      {no:'C-06', name:'按「關機」正常關機', critical:true, light:'燈滅', voice:'關機音效'},
-    ]
-  },
-  {
-    id: 'D', label: 'D. 系統資料確認', icon: '🗂️',
-    items: [
-      {no:'D-01', name:'讀取 RTC：確認為當前日期 / 時間（可點選「RTC時間同步」）', critical:true, light:'─', voice:'─'},
-      {no:'D-02', name:'讀取客戶資料：確認無亂碼或日期錯誤（客戶資料控制 >> 確認/修改 >> 發送客戶資料）', critical:true, light:'─', voice:'─'},
-      {no:'D-03', name:'讀取訂單：確認模式細節（模式:1 漸變:4.0s 貼片:25% logo:50% 間隔:6h 治療:60min）', critical:true, light:'─', voice:'─'},
-      {no:'D-04', name:'讀取 FW 版本：確認韌體版本符合出貨標準（以出貨單為主）', critical:true, light:'─', voice:'─'},
-      {no:'D-05', name:'讀取音量：確認預設值為 25（音量控制 >> 音量值:25 >> 發送音量）', critical:false, light:'─', voice:'─'},
-      {no:'D-06', name:'合約到期確認：點選「檢查客戶合約」>> 從裝置讀取 >> 開始檢查（如有發生才動作）', critical:false, light:'─', voice:'─'},
-    ]
-  },
-  {
-    id: 'E', label: 'E. 控制器功能（按鍵）', icon: '⚡',
-    items: [
-      {no:'E-01', name:'按一下功能鍵 → 開始治療', critical:true, light:'白燈恆亮', voice:'「開始使用」'},
-      {no:'E-02', name:'使用中按一下功能鍵 → 切換為暫停', critical:true, light:'白燈閃爍', voice:'「暫停使用」'},
-      {no:'E-03', name:'保持暫停至第 5 分鐘 → 語音提示', critical:false, light:'白燈閃爍', voice:'「目前暫停中，如要繼續請按下按鍵」'},
-      {no:'E-04', name:'保持暫停至第 10 分鐘 → 語音提示', critical:false, light:'白燈閃爍', voice:'「目前暫停中，如要繼續請按下按鍵」'},
-      {no:'E-05', name:'保持暫停至第 15 分鐘 → 語音提示', critical:false, light:'白燈閃爍', voice:'「目前暫停中，如要繼續請按下按鍵」'},
-      {no:'E-06', name:'暫停至第 20 分鐘仍未恢復 → 自動關機', critical:true, light:'關機/燈滅', voice:'「長時間暫停未動作，本設備將自動關機」'},
-      {no:'E-07', name:'完成一次完整療程後，當天再次開機', critical:true, light:'紅燈', voice:'「今日已使用」'},
-    ]
-  },
-  {
-    id: 'F', label: 'F. 充電功能', icon: '🔋',
-    items: [
-      {no:'F-01', name:'接上充電源 → 進入充電狀態', critical:true,  light:'綠燈閃爍', voice:'「充電中」'},
-      {no:'F-02', name:'充電完成或高電量（83% 以上）→ 充電完成狀態', critical:false, light:'綠燈恆亮', voice:'「充電已完成」'},
-      {no:'F-03', name:'拔除充電線 → 自動關機', critical:true,  light:'燈滅',   voice:'關機音效'},
-    ]
-  }
-];
+// ════════════════════════════════════════════════
+// 各產品測試組（依 productVal 對應）
+// ════════════════════════════════════════════════
+
+const TEST_SETS = {
+
+  // ── 第六代紅光控制器 ──
+  gen6: [
+    {
+      id: 'A', label: 'A. 外觀檢查', icon: '👁️',
+      showCharge: false,
+      items: [
+        {no:'A-01', name:'外觀無明顯瑕疵（污漬、破裂、縫隙過大）', critical:false, light:'─', voice:'─'},
+        {no:'A-02', name:'背帶連接處鎖緊', critical:false, light:'─', voice:'─'},
+        {no:'A-03', name:'插頭可插到底、無接觸不良', critical:true, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'B', label: 'B. 開關機', icon: '🔌',
+      showCharge: false,
+      items: [
+        {no:'B-01', name:'長按電源鍵約 3 秒 → 正常開機', critical:true, light:'綠燈恆亮', voice:'開機音效'},
+        {no:'B-02', name:'長按電源鍵約 3 秒 → 正常關機', critical:true, light:'燈滅', voice:'關機音效'},
+        {no:'B-03', name:'拔除電池再裝上開機，有語音提示（韌體/軟體連線）', critical:true, light:'紅燈', voice:'「系統需要重新設定，請開啟藍芽與軟體連線」'},
+      ]
+    },
+    {
+      id: 'C', label: 'C. APP 藍芽連線', icon: '📡',
+      note: 'APP 陪伴旅程 >> 開始穿衣 >> 第六代紅光極致衣 >> 下一步 >> 下一步 >> 裝置配對（選對應藍芽名稱）',
+      showCharge: true, chargeMode: 'stopOnly',
+      items: [
+        {no:'C-02', name:'按「開始」開始治療，貼片亮紅燈', critical:true, light:'白燈恆亮', voice:'「開始使用」'},
+        {no:'C-03', name:'按「暫停」，貼片不亮紅燈，切換為暫停', critical:true, light:'白燈閃爍', voice:'「暫停使用」'},
+        {no:'C-04', name:'調整音量後按「暫停」跟「開始」確認音量可調整', critical:false, light:'─', voice:'─'},
+        {no:'C-05', name:'連續使用至 60 分鐘療程完成，一分鐘後自動關機', critical:true, light:'關機/燈滅', voice:'「結束使用」+ 關機音效', chargeNote:'使用中不充電'},
+        {no:'C-06', name:'按「關機」正常關機', critical:true, light:'燈滅', voice:'關機音效'},
+      ]
+    },
+    {
+      id: 'D', label: 'D. 系統資料確認', icon: '🗂️',
+      showCharge: true, chargeMode: 'okng', resultMode: 'okng',
+      items: [
+        {no:'D-01', name:'讀取 RTC：確認為當前日期 / 時間（可點選「RTC時間同步」）', critical:true, light:'─', voice:'─'},
+        {no:'D-02', name:'讀取客戶資料：確認無亂碼或日期錯誤（客戶資料控制 >> 確認/修改 >> 發送客戶資料）', critical:true, light:'─', voice:'─'},
+        {no:'D-03', name:'讀取訂單：確認模式細節（模式:1 漸變:4.0s 貼片:25% logo:50% 間隔:6h 治療:60min）', critical:true, light:'─', voice:'─'},
+        {no:'D-04', name:'讀取 FW 版本：確認韌體版本符合出貨標準（以出貨單為主）', critical:true, light:'─', voice:'─'},
+        {no:'D-05', name:'讀取音量：確認預設值為 25（音量控制 >> 音量值:25 >> 發送音量）', critical:false, light:'─', voice:'─'},
+        {no:'D-06', name:'合約到期確認：點選「檢查客戶合約」>> 從裝置讀取 >> 開始檢查（如有發生才動作）', critical:false, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'E', label: 'E. 控制器功能（按鍵）', icon: '⚡',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'E-01', name:'按一下功能鍵 → 開始治療', critical:true, light:'白燈恆亮', voice:'「開始使用」'},
+        {no:'E-02', name:'使用中按一下功能鍵 → 切換為暫停', critical:true, light:'白燈閃爍', voice:'「暫停使用」'},
+        {no:'E-03', name:'保持暫停至第 5 分鐘 → 語音提示', critical:false, light:'白燈閃爍', voice:'「目前暫停中，如要繼續請按下按鍵」'},
+        {no:'E-04', name:'保持暫停至第 10 分鐘 → 語音提示', critical:false, light:'白燈閃爍', voice:'「目前暫停中，如要繼續請按下按鍵」'},
+        {no:'E-05', name:'保持暫停至第 15 分鐘 → 語音提示', critical:false, light:'白燈閃爍', voice:'「目前暫停中，如要繼續請按下按鍵」'},
+        {no:'E-06', name:'暫停至第 20 分鐘仍未恢復 → 自動關機', critical:true, light:'關機/燈滅', voice:'「長時間暫停未動作，本設備將自動關機」'},
+        {no:'E-07', name:'完成一次完整療程後，當天再次開機', critical:true, light:'紅燈', voice:'「今日已使用」'},
+      ]
+    },
+    {
+      id: 'F', label: 'F. 充電功能', icon: '🔋',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'F-01', name:'接上充電源 → 進入充電狀態', critical:true, light:'綠燈閃爍', voice:'「充電中」'},
+        {no:'F-02', name:'充電完成或高電量（83% 以上）→ 充電完成狀態', critical:false, light:'綠燈恆亮', voice:'「充電已完成」'},
+        {no:'F-03', name:'拔除充電線 → 自動關機', critical:true, light:'燈滅', voice:'關機音效'},
+      ]
+    },
+    {
+      id: 'G', label: 'G. 紅光衣確認', icon: '👕',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'G-01', name:'紅光貼片：一次亮 12～16 片（目前統一為 12 片）', critical:true, light:'持續亮', voice:'─'},
+        {no:'G-02', name:'亮光模式：持續輸出（如遇閃爍則為異常）', critical:true, light:'持續亮', voice:'─'},
+      ]
+    }
+  ],
+
+  // ── 第四代紅光 ──
+  gen4: [
+    {
+      id: 'A', label: 'A. 外觀檢查', icon: '👁️',
+      showCharge: false,
+      items: [
+        {no:'A-01', name:'控制器：外觀無明顯瑕疵（污漬、破裂）', critical:false, light:'─', voice:'─'},
+        {no:'A-02', name:'皮套：乾淨無污垢、損壞破裂', critical:false, light:'─', voice:'─'},
+        {no:'A-03', name:'背帶扣環：連結處無損壞', critical:false, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'B', label: 'B. 開關機 / 功能', icon: '🔌',
+      showCharge: false,
+      items: [
+        {no:'B-01', name:'治療開始提示音：一次嗶聲', critical:true, light:'綠燈（電量足夠）/ 紅燈（低於20%）/ 紅綠閃爍（合約到期）', voice:'一次嗶聲'},
+        {no:'B-02', name:'治療結束提示音：一次嗶聲（治療時間：90 分鐘）', critical:true, light:'─', voice:'一次嗶聲'},
+      ]
+    },
+    {
+      id: 'C', label: 'C. 紅光衣確認', icon: '👕',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'C-01', name:'紅光貼片：一次亮 12～16 片（目前統一為 12 片）', critical:true, light:'持續亮', voice:'─'},
+        {no:'C-02', name:'亮光模式：持續輸出（如遇閃爍則為異常）', critical:true, light:'持續亮', voice:'─'},
+      ]
+    }
+  ],
+
+  // ── 居家：NC108 ──
+  nc108: [
+    {
+      id: 'A', label: 'A. 儀器外觀', icon: '👁️',
+      showCharge: false,
+      items: [
+        {no:'A-01', name:'外觀：乾淨、無明顯瑕疵（污漬、破裂）', critical:false, light:'─', voice:'─'},
+        {no:'A-02', name:'螢幕：無破裂', critical:false, light:'─', voice:'─'},
+        {no:'A-03', name:'電源鍵：外觀正常無損傷', critical:false, light:'─', voice:'─'},
+        {no:'A-04', name:'儀器線：無明顯黏膠、污漬', critical:false, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'B', label: 'B. 使用功能', icon: '⚡',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'B-01', name:'電源鍵可正常開啟、結束', critical:true, light:'─', voice:'─'},
+        {no:'B-02', name:'螢幕：基本資料正確', critical:true, light:'─', voice:'─'},
+        {no:'B-03', name:'螢幕：時間正確', critical:true, light:'─', voice:'─'},
+        {no:'B-04', name:'螢幕：操作中無出現亂碼', critical:true, light:'─', voice:'─'},
+        {no:'B-05', name:'螢幕：暫停功能可正常使用', critical:true, light:'─', voice:'─'},
+        {no:'B-06', name:'緊急按鈕：可正常使用', critical:true, light:'─', voice:'─'},
+        {no:'B-07', name:'治療時間：治療 60 分鐘', critical:true, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'C', label: 'C. 治療衣確認', icon: '👕',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'C-01', name:'貼片：都有以貼紙覆蓋，減少與空氣接觸', critical:true, light:'─', voice:'─'},
+        {no:'C-02', name:'治療衣開洞：單邊通常為左邊，確認是否兩邊都有開洞（異常）', critical:true, light:'─', voice:'─'},
+        {no:'C-03', name:'貼片數量：確認共 12 片', critical:true, light:'─', voice:'─'},
+      ]
+    }
+  ],
+
+  // ── 居家：三合一 ──
+  sanyi: [
+    {
+      id: 'A', label: 'A. 儀器外觀', icon: '👁️',
+      showCharge: false,
+      items: [
+        {no:'A-01', name:'外觀：乾淨、無明顯瑕疵（污漬、破裂）', critical:false, light:'─', voice:'─'},
+        {no:'A-02', name:'按鍵：無破裂損傷', critical:false, light:'─', voice:'─'},
+        {no:'A-03', name:'儀器線：無明顯黏膠、污漬', critical:false, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'B', label: 'B. 使用功能', icon: '⚡',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'B-01', name:'輸入正確密碼時，燈號從紅轉綠', critical:true, light:'紅燈 → 綠燈', voice:'─'},
+        {no:'B-02', name:'治療時間：治療 60 分鐘', critical:true, light:'─', voice:'─'},
+      ]
+    },
+    {
+      id: 'C', label: 'C. 治療衣確認', icon: '👕',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'C-01', name:'貼片：都有以貼紙覆蓋，減少與空氣接觸', critical:true, light:'─', voice:'─'},
+        {no:'C-02', name:'治療衣開洞：單邊通常為左邊，確認是否兩邊都有開洞（異常）', critical:true, light:'─', voice:'─'},
+        {no:'C-03', name:'貼片數量：確認共 12 片', critical:true, light:'─', voice:'─'},
+      ]
+    }
+  ],
+
+  // ── 紅光衣 ──
+  shirt: [
+    {
+      id: 'A', label: 'A. 紅光衣確認', icon: '👕',
+      showCharge: false, resultMode: 'okng',
+      items: [
+        {no:'A-01', name:'紅光貼片：一次亮 12～16 片（目前統一為 12 片）', critical:true, light:'─', voice:'─'},
+        {no:'A-02', name:'亮光模式：持續輸出（如遇閃爍則為異常）', critical:true, light:'持續亮', voice:'─'},
+      ]
+    }
+  ]
+};
+
+// 目前使用的測試組（預設第六代）
+let TEST_BLOCKS = TEST_SETS['gen6'];
+
 
 const FW_STANDARDS = {
-  '第六代紅光控制器': '0401',
-  '智慧手錶': '最新版',
-  '宏碁指環': '最新版',
-  '紅光衣': '─'
+  'gen6':  '0401',
+  'gen4':  '請確認出貨單',
+  'nc108': '請確認出貨單',
+  'sanyi': '請確認出貨單',
+  'watch': '最新版',
+  'ring':  '最新版',
+  'shirt': '─'
 };
 
 let currentSection = 0;
@@ -528,7 +676,12 @@ const HISTORY_KEY = 'qc_history_v2';
 function buildTests() {
   const wrap = document.getElementById('testBlocks');
   wrap.innerHTML = '';
+
   TEST_BLOCKS.forEach(block => {
+    const showCharge = block.showCharge !== false;
+    const chargeMode = block.chargeMode || 'full'; // full / stopOnly / okng
+    const resultMode = block.resultMode || 'full'; // full (OK/NG/NA) / okng (OK/NG only)
+
     // Section header
     const head = document.createElement('div');
     head.className = 'block-section-head';
@@ -538,9 +691,23 @@ function buildTests() {
       <span style="margin-left:auto;font-family:var(--mono);font-size:11px;background:var(--primary);color:#fff;padding:2px 10px;border-radius:20px" id="block-badge-${block.id}">0/${block.items.length}</span>`;
     wrap.appendChild(head);
 
-    // Table
+    // Block note (e.g. C group instruction)
+    if (block.note) {
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:12px;color:var(--muted);background:var(--g50);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:8px;line-height:1.7';
+      note.innerHTML = `<strong style="color:var(--primary-d)">📋 前置步驟：</strong>${block.note}`;
+      wrap.appendChild(note);
+    }
+
+    // Build table
     const table = document.createElement('table');
     table.className = 'test-table';
+
+    // Result header cell
+    const resultHeader = resultMode === 'okng' ? 'OK / NG' : '測試結果';
+    // Charge header cell
+    const chargeHeader = showCharge ? (chargeMode === 'stopOnly' ? '充電中<br>是否停用' : '充電中<br>是否正常') : null;
+
     table.innerHTML = `
       <thead>
         <tr>
@@ -548,15 +715,55 @@ function buildTests() {
           <th class="col-name">測試項目</th>
           <th class="col-light">燈號</th>
           <th class="col-voice">語音 / 音效</th>
-          <th class="col-result">測試結果</th>
-          <th class="col-charge">充電中<br>是否正常</th>
+          <th class="col-result">${resultHeader}</th>
+          ${showCharge ? `<th class="col-charge">${chargeHeader}</th>` : ''}
           <th class="col-note">備註</th>
         </tr>
       </thead>
       <tbody>
-        ${block.items.map((item,i) => {
+        ${block.items.map((item, i) => {
           const key = `${block.id}_${i}`;
-          const hasCharge = item.charge !== false; // show charge col unless explicitly false
+
+          // Result pills
+          let resultPills = '';
+          if (resultMode === 'okng') {
+            resultPills = `
+              <label class="r-pill ok-pill" onclick="selectResult('${key}','OK')"><input type="radio" name="t_${key}" value="OK"/>OK</label>
+              <label class="r-pill ng-pill" onclick="selectResult('${key}','NG')"><input type="radio" name="t_${key}" value="NG"/>NG</label>`;
+          } else {
+            resultPills = `
+              <label class="r-pill ok-pill" onclick="selectResult('${key}','OK')"><input type="radio" name="t_${key}" value="OK"/>OK</label>
+              <label class="r-pill ng-pill" onclick="selectResult('${key}','NG')"><input type="radio" name="t_${key}" value="NG"/>NG</label>
+              <label class="r-pill na-pill" onclick="selectResult('${key}','NA')"><input type="radio" name="t_${key}" value="NA"/>未測試</label>`;
+          }
+
+          // Charge cell
+          let chargeCell = '';
+          if (showCharge) {
+            if (item.chargeNote) {
+              chargeCell = `<td class="col-charge"><div style="text-align:center;font-size:11px;color:var(--muted)">${item.chargeNote}</div></td>`;
+            } else if (chargeMode === 'stopOnly') {
+              chargeCell = `<td class="col-charge">
+                <div class="charge-radio">
+                  <label class="charge-pill stop-c" onclick="selectCharge('${key}','stop')"><input type="radio" name="c_${key}" value="stop"/>充電停用</label>
+                  <label class="charge-pill ng-c"   onclick="selectCharge('${key}','ng')"><input type="radio" name="c_${key}" value="ng"/>異常</label>
+                </div></td>`;
+            } else if (chargeMode === 'okng') {
+              chargeCell = `<td class="col-charge">
+                <div class="charge-radio">
+                  <label class="charge-pill ok-c" onclick="selectCharge('${key}','ok')"><input type="radio" name="c_${key}" value="ok"/>OK</label>
+                  <label class="charge-pill ng-c" onclick="selectCharge('${key}','ng')"><input type="radio" name="c_${key}" value="ng"/>NG</label>
+                </div></td>`;
+            } else {
+              chargeCell = `<td class="col-charge">
+                <div class="charge-radio">
+                  <label class="charge-pill stop-c" onclick="selectCharge('${key}','stop')"><input type="radio" name="c_${key}" value="stop"/>充電停用</label>
+                  <label class="charge-pill ok-c"   onclick="selectCharge('${key}','ok')"><input type="radio" name="c_${key}" value="ok"/>正常</label>
+                  <label class="charge-pill ng-c"   onclick="selectCharge('${key}','ng')"><input type="radio" name="c_${key}" value="ng"/>異常</label>
+                </div></td>`;
+            }
+          }
+
           return `
           <tr id="row-${key}">
             <td class="col-no">
@@ -564,23 +771,14 @@ function buildTests() {
               ${item.critical ? '<span class="crit-dot" title="關鍵項目">★</span>' : ''}
             </td>
             <td class="col-name">${item.name}</td>
-            <td class="col-light">${item.light||'─'}</td>
-            <td class="col-voice">${item.voice||'─'}</td>
+            <td class="col-light">${item.light || '─'}</td>
+            <td class="col-voice">${item.voice || '─'}</td>
             <td class="col-result">
-              <div class="radio-group" style="justify-content:center">
-                <label class="r-pill ok-pill" onclick="selectResult('${key}','OK')"><input type="radio" name="t_${key}" value="OK"/>OK</label>
-                <label class="r-pill ng-pill" onclick="selectResult('${key}','NG')"><input type="radio" name="t_${key}" value="NG"/>NG</label>
-                <label class="r-pill na-pill" onclick="selectResult('${key}','NA')"><input type="radio" name="t_${key}" value="NA"/>N/A</label>
+              <div class="radio-group" style="justify-content:center;flex-wrap:wrap">
+                ${resultPills}
               </div>
             </td>
-            <td class="col-charge">
-              ${hasCharge ? `
-              <div class="charge-radio">
-                <label class="charge-pill stop-c" onclick="selectCharge('${key}','stop')"><input type="radio" name="c_${key}" value="stop"/>充電停用</label>
-                <label class="charge-pill ok-c"   onclick="selectCharge('${key}','ok')"><input type="radio" name="c_${key}" value="ok"/>正常</label>
-                <label class="charge-pill ng-c"   onclick="selectCharge('${key}','ng')"><input type="radio" name="c_${key}" value="ng"/>異常</label>
-              </div>` : '<div style="text-align:center;color:var(--g200);font-size:18px">─</div>'}
-            </td>
+            ${chargeCell}
             <td class="col-note"><input style="width:100%;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;font-family:var(--font);background:var(--g50);outline:none" placeholder="備註" name="note_${key}"/></td>
           </tr>`;
         }).join('')}
@@ -713,8 +911,40 @@ function goSection(idx) {
 
 // ── PRODUCT CHANGE ──
 function onProductChange() {
-  const val = document.getElementById('productType').value;
+  const sel = document.getElementById('productType');
+  const val = sel.value;
+  const text = sel.options[sel.selectedIndex]?.text || '';
   document.getElementById('fwStandard').textContent = FW_STANDARDS[val] || '─';
+  switchTestSet(val, text);
+}
+
+function switchTestSet(productVal, productText) {
+  const wrap = document.getElementById('testBlocks');
+  const notice = document.getElementById('testSetNotice');
+
+  const labels = {
+    gen6:  '第六代紅光控制器',
+    gen4:  '第四代紅光',
+    nc108: '居家：NC108',
+    sanyi: '居家：三合一',
+    watch: '智慧手錶',
+    ring:  '宏碁指環',
+    shirt: '紅光衣'
+  };
+
+  if (TEST_SETS[productVal]) {
+    // 有對應測試組 → 載入並顯示
+    TEST_BLOCKS = TEST_SETS[productVal];
+    if (notice) notice.style.display = 'none';
+    buildTests();
+    calculate();
+  } else {
+    // 尚未建立測試組 → 顯示提示卡
+    TEST_BLOCKS = [];
+    wrap.innerHTML = '';
+    if (notice) notice.style.display = 'flex';
+    document.getElementById('noticeProductName').textContent = labels[productVal] || productText;
+  }
 }
 
 // ── COLLECT DATA ──
@@ -890,9 +1120,8 @@ function init() {
   document.getElementById('qcId').value = `QC-${ts}`;
   document.getElementById('hdrQcId').textContent = `QC-${ts}`;
   document.getElementById('testDate').valueAsDate = now;
-  buildTests();
-  calculate();
   onProductChange();
+  calculate();
 }
 
 init();
