@@ -222,13 +222,13 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
       </div>
       <div class="field">
         <label>測試人員 <span class="required">*</span></label>
-        <input id="tester" name="tester" placeholder="請輸入姓名" required/>
+        <input id="tester" name="tester" value="孫雅慧" required/>
       </div>
       <div class="field">
         <label>地區 <span class="required">*</span></label>
         <select id="site" name="site" required>
           <option value="">請選擇</option>
-          <option>台北</option><option>台中</option><option>高雄</option><option>其他</option>
+          <option>台北</option><option>台中</option><option>高雄</option><option selected>創新研發辦公室</option><option>其他</option>
         </select>
       </div>
     </div>
@@ -237,7 +237,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
         <label>產品類型 <span class="required">*</span></label>
         <select id="productType" name="product_type" required onchange="onProductChange()">
           <option value="">請選擇</option>
-          <option>第六代紅光控制器</option>
+          <option selected>第六代紅光控制器</option>
           <option>紅光衣</option>
           <option>智慧手錶</option>
           <option>宏碁指環</option>
@@ -248,12 +248,22 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
         <input id="serialNo" name="serial_no" placeholder="掃描 QR Code 或手輸" required/>
       </div>
       <div class="field">
-        <label>藍牙名稱</label>
-        <input id="btName" name="bluetooth_name" placeholder="WiseBalance-XXXX" class="field-auto" style="background:#fff"/>
+        <label>藍牙名稱（後四碼）</label>
+        <div style="display:flex;align-items:center;gap:0;border:2px solid var(--border);border-radius:10px;overflow:hidden;background:var(--g50);transition:.2s" id="btWrap">
+          <span style="padding:11px 12px;font-size:15px;color:var(--muted);background:var(--g100);border-right:2px solid var(--border);white-space:nowrap;font-family:var(--mono);font-weight:600">Wise Balance-</span>
+          <input id="btSuffix" name="bt_suffix" placeholder="XXXX" maxlength="6"
+            style="border:none;outline:none;padding:11px 12px;font-size:15px;font-family:var(--mono);background:transparent;width:100%;color:var(--text)"
+            oninput="updateBtName(this.value)"
+            onfocus="document.getElementById('btWrap').style.borderColor='var(--primary)';document.getElementById('btWrap').style.boxShadow='0 0 0 3px rgba(26,122,74,.1)'"
+            onblur="document.getElementById('btWrap').style.borderColor='var(--border)';document.getElementById('btWrap').style.boxShadow='none'"
+          />
+        </div>
+        <input type="hidden" id="btName" name="bluetooth_name"/>
+        <div class="field-hint" id="btPreview" style="font-family:var(--mono);color:var(--primary)">Wise Balance-</div>
       </div>
       <div class="field">
         <label>韌體版本</label>
-        <input id="fwVersion" name="fw_version" placeholder="例如 0401"/>
+        <input id="fwVersion" name="fw_version" value="0401"/>
         <div class="field-hint">出貨標準版本：<strong id="fwStandard">─</strong></div>
       </div>
     </div>
@@ -784,6 +794,13 @@ function clearHistory() {
   renderHistory();
 }
 
+// ── BLUETOOTH NAME ──
+function updateBtName(suffix) {
+  const full = 'Wise Balance-' + suffix.toUpperCase();
+  document.getElementById('btName').value = full;
+  document.getElementById('btPreview').textContent = full || 'Wise Balance-';
+}
+
 // ── INIT ──
 function init() {
   const now = new Date();
@@ -793,6 +810,7 @@ function init() {
   document.getElementById('testDate').valueAsDate = now;
   buildTests();
   calculate();
+  onProductChange();
 }
 
 init();
