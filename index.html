@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>QC 前測系統 — 智平衡</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f2;--card:#fff;--border:#e0e8e4;
+  --g50:#f7faf8;--g100:#e8f0eb;--g200:#c8dcd0;--g400:#7aab90;--g500:#4d8c6a;
+  --primary:#1a7a4a;--primary-d:#145e39;--primary-p:#eafaf1;--primary-l:#82e0aa;
+  --accent:#f59e0b;--accent-p:#fffbeb;
+  --danger:#dc2626;--danger-p:#fff5f5;--danger-l:#fecaca;
+  --ok:#16a34a;--ok-p:#f0fdf4;
+  --warn:#d97706;--warn-p:#fffbeb;
+  --text:#1a2e23;--muted:#5a7a66;
+  --font:'Noto Sans TC',sans-serif;--mono:'JetBrains Mono',monospace;
+  --radius:14px;--shadow:0 2px 12px rgba(26,122,74,.08);--shadow-lg:0 8px 32px rgba(26,122,74,.12);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+.hdr{
+  background:linear-gradient(135deg,#1a7a4a 0%,#145e39 60%,#0e4429 100%);
+  padding:0;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(14,68,41,.3);
+}
+.hdr-inner{max-width:1160px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;gap:16px}
+.hdr-icon{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:22px}
+.hdr-title{font-size:20px;font-weight:900;color:#fff;letter-spacing:-.3px}
+.hdr-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.hdr-badge{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);padding:5px 14px;border-radius:20px;font-size:13px;font-family:var(--mono)}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{background:rgba(255,255,255,.1);height:4px}
+.progress-bar{height:4px;background:linear-gradient(90deg,#7dffb3,#27ae60);width:0%;transition:width .4s}
+
+/* ── STEP NAV ── */
+.step-nav{max-width:1160px;margin:24px auto 0;padding:0 24px;display:flex;gap:6px}
+.step{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted);background:var(--card);border:2px solid transparent;transition:.2s}
+.step:hover{border-color:var(--primary-l)}
+.step.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.step.done{background:var(--ok-p);color:var(--ok);border-color:var(--primary-l)}
+.step-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+.step.active .step-num{background:rgba(255,255,255,.3)}
+.step.done .step-num{background:var(--ok);color:#fff}
+
+/* ── LAYOUT ── */
+main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
+.section{display:none}
+.section.active{display:block}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:18px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.card-icon{width:36px;height:36px;border-radius:10px;background:var(--primary-p);display:flex;align-items:center;justify-content:center;font-size:18px}
+.card-title{font-size:17px;font-weight:900;color:var(--text)}
+.card-sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.col-span2{grid-column:span 2}
+
+/* ── FORM FIELDS ── */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{
+  border:2px solid var(--border);border-radius:10px;padding:11px 14px;
+  font-family:var(--font);font-size:15px;color:var(--text);
+  background:var(--g50);outline:none;transition:.2s;width:100%;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,122,74,.1);background:#fff}
+.field textarea{min-height:90px;resize:vertical}
+.field-auto{background:var(--primary-p)!important;color:var(--primary-d)!important;font-family:var(--mono)!important;font-size:14px!important}
+.field-hint{font-size:12px;color:var(--muted);margin-top:4px}
+.required{color:var(--danger)}
+
+/* ── TEST TABLE ── */
+.test-block{margin-bottom:24px}
+.block-head{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--primary-p);border-radius:10px;margin-bottom:10px;border-left:4px solid var(--primary)}
+.block-label{font-size:13px;font-weight:900;color:var(--primary-d);text-transform:uppercase;letter-spacing:.06em}
+.block-badge{font-size:11px;background:var(--primary);color:#fff;padding:2px 10px;border-radius:20px;margin-left:auto;font-family:var(--mono)}
+
+.test-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:#fff;transition:.2s}
+.test-item:hover{border-color:var(--primary-l);box-shadow:0 2px 8px rgba(26,122,74,.06)}
+.test-item.result-ok{background:var(--ok-p);border-color:#86efac}
+.test-item.result-ng{background:var(--danger-p);border-color:var(--danger-l)}
+.test-item.result-na{background:var(--g50);border-color:var(--border)}
+.test-name{font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px}
+.crit-tag{font-size:10px;background:#fef2f2;color:var(--danger);border:1px solid var(--danger-l);padding:1px 7px;border-radius:20px;font-weight:700;flex-shrink:0}
+.test-note{width:160px}
+.test-note input{border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font);width:100%;background:var(--g50);outline:none}
+.test-note input:focus{border-color:var(--primary)}
+
+/* ── RADIO PILLS ── */
+.radio-group{display:flex;gap:4px;flex-shrink:0}
+.r-pill{display:flex;align-items:center;gap:4px;padding:7px 14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:.15s;user-select:none;white-space:nowrap}
+.r-pill:hover{border-color:var(--primary-l)}
+.r-pill input{display:none}
+.r-pill.ok-pill.selected{background:var(--ok);border-color:var(--ok);color:#fff}
+.r-pill.ng-pill.selected{background:var(--danger);border-color:var(--danger);color:#fff}
+.r-pill.na-pill.selected{background:var(--g400);border-color:var(--g400);color:#fff}
+
+/* ── NG PANEL ── */
+.ng-panel{display:none;border:2px solid var(--danger-l);background:var(--danger-p);padding:20px;border-radius:12px;margin-top:16px;animation:slideIn .25s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SUMMARY STATS ── */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.stat{padding:18px 16px;border-radius:12px;background:var(--g50);border:1px solid var(--border);text-align:center}
+.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.stat-val{font-size:28px;font-weight:900;font-family:var(--mono)}
+.stat-ok .stat-val{color:var(--ok)}
+.stat-ng .stat-val{color:var(--danger)}
+.stat-warn .stat-val{color:var(--warn)}
+.stat-primary .stat-val{color:var(--primary)}
+
+/* ── FINAL STATUS ── */
+.final-badge{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:14px;font-size:22px;font-weight:900;margin:16px 0}
+.final-pass{background:var(--ok-p);color:var(--ok);border:2px solid #86efac}
+.final-fail{background:var(--danger-p);color:var(--danger);border:2px solid var(--danger-l)}
+.final-review{background:var(--warn-p);color:var(--warn);border:2px solid #fcd34d}
+.final-pending{background:var(--g100);color:var(--muted);border:2px solid var(--border)}
+
+/* ── INCIDENT PANEL ── */
+.incident-card{border:2px solid var(--danger-l);background:#fff5f5}
+.incident-auto-tag{display:inline-flex;align-items:center;gap:6px;background:#fef2f2;color:var(--danger);border:1px solid var(--danger-l);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px}
+
+/* ── HISTORY ── */
+.history-item{padding:12px 16px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;cursor:pointer;transition:.15s}
+.history-item:hover{border-color:var(--primary-l);background:var(--primary-p)}
+.h-id{font-family:var(--mono);font-size:13px;color:var(--primary);font-weight:700}
+.h-info{font-size:13px;color:var(--muted)}
+.h-status{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+.h-pass{background:var(--ok-p);color:var(--ok)}
+.h-fail{background:var(--danger-p);color:var(--danger)}
+.h-review{background:var(--warn-p);color:var(--warn)}
+.h-pending{background:var(--g100);color:var(--muted)}
+
+/* ── ACTIONS ── */
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:none;border-radius:11px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:7px;transition:.18s}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(26,122,74,.3)}
+.btn-primary:hover{background:var(--primary-d);transform:translateY(-1px);box-shadow:0 5px 16px rgba(26,122,74,.4)}
+.btn-ghost{background:var(--card);color:var(--text);border:2px solid var(--border)}
+.btn-ghost:hover{border-color:var(--primary-l)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-next{margin-left:auto}
+
+/* ── DIVIDER ── */
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+/* ── ANALYSIS CHART ── */
+.chart-bar-wrap{display:flex;flex-direction:column;gap:8px}
+.chart-row{display:grid;grid-template-columns:130px 1fr 40px;align-items:center;gap:10px;font-size:13px}
+.chart-label{color:var(--muted);font-weight:700;text-align:right}
+.chart-track{background:var(--g100);border-radius:20px;height:10px;overflow:hidden}
+.chart-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--primary-l),var(--primary));transition:width .6s}
+.chart-fill-ng{background:linear-gradient(90deg,var(--danger-l),var(--danger))}
+.chart-val{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .grid4,.grid3,.stats{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+  .step-nav{overflow-x:auto;padding-bottom:8px}
+  .test-item{grid-template-columns:1fr;gap:8px}
+  .test-note{width:100%}
+}
+@media print{
+  .hdr,.step-nav,.actions,.ng-panel>*:last-child{display:none}
+  .card{box-shadow:none;break-inside:avoid}
+  .section{display:block!important}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-icon">🔬</div>
+    <div>
+      <div class="hdr-title">QC 前測系統</div>
+      <div class="hdr-sub">智平衡健康事業｜產品交付前品質驗證</div>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-badge" id="hdrQcId">QC-─</span>
+      <span class="hdr-badge" id="hdrStatus" style="background:rgba(255,255,255,.25)">未開始</span>
+    </div>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+</header>
+
+<!-- Step Nav -->
+<nav class="step-nav">
+  <div class="step active" id="step0" onclick="goSection(0)"><span class="step-num">1</span>基本資料</div>
+  <div class="step" id="step1" onclick="goSection(1)"><span class="step-num">2</span>測試項目</div>
+  <div class="step" id="step2" onclick="goSection(2)"><span class="step-num">3</span>異常紀錄</div>
+  <div class="step" id="step3" onclick="goSection(3)"><span class="step-num">4</span>結果總覽</div>
+  <div class="step" id="step4" onclick="goSection(4)"><span class="step-num">5</span>歷程分析</div>
+</nav>
+
+<main>
+
+<!-- ════════ SECTION 0：基本資料 ════════ -->
+<section class="section active" id="sec0">
+  <div class="card">
+    <div class="card-head"><div class="card-icon">📋</div><div><div class="card-title">基本資料</div><div class="card-sub">自動帶入為優先，請確認後修正</div></div></div>
+    <div class="grid4" style="margin-bottom:14px">
+      <div class="field">
+        <label>QC ID <span style="color:var(--primary);font-family:var(--mono);font-weight:400;font-size:11px">自動產生</span></label>
+        <input class="field-auto" id="qcId" name="qc_id" readonly/>
+      </div>
+      <div class="field">
+        <label>測試日期 <span class="required">*</span></label>
+        <input type="date" id="testDate" name="test_date" required/>
+      </div>
+      <div class="field">
+        <label>測試人員 <span class="required">*</span></label>
+        <input id="tester" name="tester" placeholder="請輸入姓名" required/>
+      </div>
+      <div class="field">
+        <label>地區 <span class="required">*</span></label>
+        <select id="site" name="site" required>
+          <option value="">請選擇</option>
+          <option>台北</option><option>台中</option><option>高雄</option><option>其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid4">
+      <div class="field">
+        <label>產品類型 <span class="required">*</span></label>
+        <select id="productType" name="product_type" required onchange="onProductChange()">
+          <option value="">請選擇</option>
+          <option>第六代紅光控制器</option>
+          <option>紅光衣</option>
+          <option>智慧手錶</option>
+          <option>宏碁指環</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>產品序號 <span class="required">*</span></label>
+        <input id="serialNo" name="serial_no" placeholder="掃描 QR Code 或手輸" required/>
+      </div>
+      <div class="field">
+        <label>藍牙名稱</label>
+        <input id="btName" name="bluetooth_name" placeholder="WiseBalance-XXXX" class="field-auto" style="background:#fff"/>
+      </div>
+      <div class="field">
+        <label>韌體版本</label>
+        <input id="fwVersion" name="fw_version" placeholder="例如 0401"/>
+        <div class="field-hint">出貨標準版本：<strong id="fwStandard">─</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary btn-next" onclick="goSection(1)">開始測試 →</button>
+  </div>
+</section>
+
+<!-- ════════ SECTION 1：測試項目 ════════ -->
+<section class="section" id="sec1">
+  <div class="card">
+    <div class="card-head"><div class="card-icon">🧪</div><div><div class="card-title">QC 測試項目</div><div class="card-sub">紅色 <span style="color:var(--danger);font-weight:700">關鍵</span> 項目 NG → 自動判定 FAIL</div></div></div>
+    <div id="testBlocks"></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" onclick="goSection(0)">← 上一步</button>
+    <div style="flex:1"></div>
+    <span style="font-size:13px;color:var(--muted);align-self:center" id="progressText">0 / 0 已填</span>
+    <button class="btn btn-primary" onclick="goSection(2)">下一步：異常紀錄 →</button>
+  </div>
+</section>
+
+<!-- ════════ SECTION 2：異常紀錄 ════════ -->
+<section class="section" id="sec2">
+  <div id="noNgCard" class="card" style="text-align:center;padding:40px">
+    <div style="font-size:48px;margin-bottom:12px">✅</div>
+    <div style="font-size:18px;font-weight:900;color:var(--ok);margin-bottom:8px">目前沒有 NG 項目</div>
+    <div style="font-size:14px;color:var(--muted)">所有測試皆通過或標為 N/A，可直接進入結果總覽</div>
+  </div>
+  <div id="ngSection" style="display:none">
+    <div class="card incident-card">
+      <div class="card-head">
+        <div class="card-icon" style="background:#fef2f2">⚠️</div>
+        <div>
+          <div class="card-title">異常紀錄</div>
+          <div class="card-sub">偵測到 NG 項目，請完整填寫</div>
+        </div>
+        <div class="incident-auto-tag" id="incidentAutoTag" style="margin-left:auto;display:none">🔴 自動建立事件</div>
+      </div>
+      <div class="grid4" style="margin-bottom:14px">
+        <div class="field">
+          <label>問題分類 L2</label>
+          <select name="issue_l2">
+            <option value="">請選擇</option>
+            <option>藍牙連線問題</option><option>資料同步異常</option>
+            <option>韌體 / 版本異常</option><option>合約狀態異常</option>
+            <option>顯示 / 邏輯異常</option><option>硬體功能異常</option>
+            <option>充電 / 電量異常</option><option>其他</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>是否影響出貨</label>
+          <select id="blockDelivery" name="block_delivery" onchange="checkAutoIncident()">
+            <option value="">請選擇</option>
+            <option>是</option><option>否</option><option>需主管判斷</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>建立事件</label>
+          <select name="create_incident" id="createIncident">
+            <option>自動建立</option><option>暫不建立</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>附件連結</label>
+          <input name="attachment_url" placeholder="照片 / 影片雲端連結"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>異常描述</label>
+        <textarea name="issue_description" placeholder="請描述異常情境、重現步驟與當下處理方式"></textarea>
+      </div>
+      <hr class="divider"/>
+      <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px">NG 項目清單</div>
+      <div id="ngList"></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" onclick="goSection(1)">← 上一步</button>
+    <button class="btn btn-primary btn-next" onclick="goSection(3)">下一步：結果總覽 →</button>
+  </div>
+</section>
+
+<!-- ════════ SECTION 3：結果總覽 ════════ -->
+<section class="section" id="sec3">
+  <div class="card">
+    <div class="card-head"><div class="card-icon">📊</div><div><div class="card-title">結果總覽</div><div class="card-sub">系統自動計算 PASS / FAIL / 需複檢</div></div></div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">總項目</div><div class="stat-val" id="totalCount" style="color:var(--text)">─</div></div>
+      <div class="stat stat-ok"><div class="stat-label">OK</div><div class="stat-val" id="okCount">─</div></div>
+      <div class="stat stat-ng"><div class="stat-label">NG</div><div class="stat-val" id="ngCount">─</div></div>
+      <div class="stat stat-warn"><div class="stat-label">N/A</div><div class="stat-val" id="naCount">─</div></div>
+      <div class="stat"><div class="stat-label">完成率</div><div class="stat-val stat-primary" id="completePct" style="color:var(--primary)">─</div></div>
+    </div>
+    <div style="text-align:center;padding:8px 0 20px">
+      <div class="final-badge final-pending" id="finalBadge">⏳ 尚未完成</div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>總備註</label>
+      <textarea name="final_note" placeholder="補充說明、特殊狀況或後續追蹤事項"></textarea>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" onclick="goSection(2)">← 上一步</button>
+    <button class="btn btn-ghost" onclick="saveDraft()">💾 儲存草稿</button>
+    <button class="btn btn-ghost" onclick="exportJSON()">📥 匯出 JSON</button>
+    <button class="btn btn-ghost" onclick="window.print()">🖨️ 列印 / PDF</button>
+    <button class="btn btn-primary" onclick="submitQC()">✅ 確認送出</button>
+  </div>
+</section>
+
+<!-- ════════ SECTION 4：歷程分析 ════════ -->
+<section class="section" id="sec4">
+  <div class="card">
+    <div class="card-head"><div class="card-icon">📈</div><div><div class="card-title">QC 歷程分析</div><div class="card-sub">本機紀錄（最多 50 筆）</div></div></div>
+    <div class="stats" style="margin-bottom:20px">
+      <div class="stat"><div class="stat-label">總次數</div><div class="stat-val" id="hTotalCount" style="color:var(--text)">0</div></div>
+      <div class="stat stat-ok"><div class="stat-label">PASS</div><div class="stat-val" id="hPassCount">0</div></div>
+      <div class="stat stat-ng"><div class="stat-label">FAIL</div><div class="stat-val" id="hFailCount">0</div></div>
+      <div class="stat stat-warn"><div class="stat-label">需複檢</div><div class="stat-val" id="hReviewCount">0</div></div>
+      <div class="stat stat-primary"><div class="stat-label">通過率</div><div class="stat-val" id="hPassRate" style="color:var(--primary)">─</div></div>
+    </div>
+    <div class="grid2" style="margin-bottom:20px">
+      <div>
+        <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">分類 NG 次數</div>
+        <div class="chart-bar-wrap" id="ngChart"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">測試人員統計</div>
+        <div class="chart-bar-wrap" id="testerChart"></div>
+      </div>
+    </div>
+    <hr class="divider"/>
+    <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">歷程記錄</div>
+    <div id="historyList"></div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="clearHistory()">🗑️ 清除本機歷程</button>
+      <button class="btn btn-ghost" onclick="exportAllJSON()">📥 匯出所有歷程</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════
+// 測試項目資料
+// ════════════════════════════════════════════════
+const TEST_BLOCKS = [
+  {
+    id: 'A', label: 'A. 外觀 / 基本', icon: '👁️',
+    items: [
+      {name:'外觀無污漬、破裂、縫隙過大', critical:false},
+      {name:'背帶連接處鎖緊', critical:false},
+      {name:'插頭可插到底，無接觸不良', critical:true},
+      {name:'可正常開機與關機', critical:true},
+      {name:'燈號與語音提示正確', critical:true},
+    ]
+  },
+  {
+    id: 'B', label: 'B. 連線穩定性', icon: '📡',
+    items: [
+      {name:'App 可搜尋到正確藍牙名稱', critical:true},
+      {name:'配對成功後維持連線 3 分鐘不中斷', critical:true},
+      {name:'App 切背景再返回後仍可連線', critical:true},
+      {name:'關閉 App 後重開，可正常重連', critical:true},
+    ]
+  },
+  {
+    id: 'C', label: 'C. App / 資料同步', icon: '🔄',
+    items: [
+      {name:'可完成一次完整療程（60 分鐘或手動結束）', critical:true},
+      {name:'App 有產生療程紀錄', critical:true},
+      {name:'重開 App 後，紀錄仍存在', critical:true},
+      {name:'連續兩筆測試紀錄皆保存，不只第一筆', critical:true},
+    ]
+  },
+  {
+    id: 'D', label: 'D. 系統資料驗證', icon: '🗂️',
+    items: [
+      {name:'RTC 日期時間正確', critical:true},
+      {name:'客戶資料無亂碼或日期錯誤', critical:true},
+      {name:'訂單 / 模式資料正確', critical:true},
+      {name:'韌體版本符合出貨標準', critical:true},
+    ]
+  },
+  {
+    id: 'E', label: 'E. 合約狀態', icon: '📝',
+    items: [
+      {name:'合約有效狀態下可正常開始治療', critical:true},
+      {name:'重開機後合約狀態一致，不重複誤觸發', critical:true},
+    ]
+  },
+  {
+    id: 'F', label: 'F. 治療流程', icon: '⚡',
+    items: [
+      {name:'開始 → 暫停 → 恢復 → 結束流程正常', critical:true},
+      {name:'暫停 20 分鐘自動關機正常', critical:false},
+      {name:'完整療程結束後狀態正確', critical:true},
+    ]
+  },
+  {
+    id: 'G', label: 'G. 充電 / 電量', icon: '🔋',
+    items: [
+      {name:'接上充電源進入充電狀態，燈號正確（綠燈閃爍）', critical:true},
+      {name:'高電量或充滿時燈號正確（綠燈恆亮）', critical:false},
+      {name:'拔除充電線後狀態正確', critical:false},
+    ]
+  }
+];
+
+const FW_STANDARDS = {
+  '第六代紅光控制器': '0401',
+  '智慧手錶': '最新版',
+  '宏碁指環': '最新版',
+  '紅光衣': '─'
+};
+
+let currentSection = 0;
+const HISTORY_KEY = 'qc_history_v2';
+
+// ── BUILD TEST BLOCKS ──
+function buildTests() {
+  const wrap = document.getElementById('testBlocks');
+  wrap.innerHTML = '';
+  TEST_BLOCKS.forEach(block => {
+    const div = document.createElement('div');
+    div.className = 'test-block';
+    div.innerHTML = `
+      <div class="block-head">
+        <span style="font-size:18px">${block.icon}</span>
+        <span class="block-label">${block.label}</span>
+        <span class="block-badge" id="block-badge-${block.id}">0/${block.items.length}</span>
+      </div>
+      ${block.items.map((item,i) => {
+        const key = `${block.id}_${i}`;
+        return `
+        <div class="test-item" id="row-${key}">
+          <div class="test-name">
+            ${item.name}
+            ${item.critical ? '<span class="crit-tag">關鍵</span>':''}
+          </div>
+          <div class="radio-group">
+            <label class="r-pill ok-pill" onclick="selectResult('${key}','OK')"><input type="radio" name="t_${key}" value="OK"/>✓ OK</label>
+            <label class="r-pill ng-pill" onclick="selectResult('${key}','NG')"><input type="radio" name="t_${key}" value="NG"/>✗ NG</label>
+            <label class="r-pill na-pill" onclick="selectResult('${key}','NA')"><input type="radio" name="t_${key}" value="NA"/>─ N/A</label>
+          </div>
+          <div class="test-note"><input placeholder="備註" name="note_${key}"/></div>
+        </div>`;
+      }).join('')}`;
+    wrap.appendChild(div);
+  });
+}
+
+function selectResult(key, val) {
+  const row = document.getElementById(`row-${key}`);
+  row.classList.remove('result-ok','result-ng','result-na');
+  row.classList.add(val==='OK'?'result-ok':val==='NG'?'result-ng':'result-na');
+  row.querySelectorAll('.r-pill').forEach(p => p.classList.remove('selected'));
+  const map = {OK:'ok-pill',NG:'ng-pill',NA:'na-pill'};
+  row.querySelector(`.${map[val]}`).classList.add('selected');
+  calculate();
+}
+
+// ── CALCULATE ──
+function calculate() {
+  let total=0, ok=0, ng=0, na=0, answered=0, criticalNg=false;
+  const ngItems = [];
+
+  TEST_BLOCKS.forEach(block => {
+    let blockDone = 0;
+    block.items.forEach((item, i) => {
+      const key = `${block.id}_${i}`;
+      const checked = document.querySelector(`input[name="t_${key}"]:checked`);
+      total++;
+      if (checked) {
+        answered++;
+        blockDone++;
+        if (checked.value==='OK') ok++;
+        if (checked.value==='NG') {
+          ng++;
+          if (item.critical) criticalNg = true;
+          ngItems.push({block:block.label, name:item.name, critical:item.critical});
+        }
+        if (checked.value==='NA') na++;
+      }
+    });
+    const badge = document.getElementById(`block-badge-${block.id}`);
+    if (badge) badge.textContent = `${blockDone}/${block.items.length}`;
+  });
+
+  // Stats
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('okCount').textContent = ok;
+  document.getElementById('ngCount').textContent = ng;
+  document.getElementById('naCount').textContent = na;
+  document.getElementById('completePct').textContent = total ? Math.round(answered/total*100)+'%' : '─';
+  document.getElementById('progressText').textContent = `${answered} / ${total} 已填`;
+
+  // Progress bar
+  document.getElementById('progressBar').style.width = total ? (answered/total*100)+'%' : '0%';
+
+  // Final status
+  const badge = document.getElementById('finalBadge');
+  badge.className = 'final-badge';
+  let statusText = '';
+  if (answered < total) {
+    badge.classList.add('final-pending'); statusText='⏳ 尚未完成';
+  } else if (ng===0) {
+    badge.classList.add('final-pass'); statusText='✅ PASS — 可出貨';
+  } else if (criticalNg) {
+    badge.classList.add('final-fail'); statusText='❌ FAIL — 關鍵項目 NG';
+  } else {
+    badge.classList.add('final-review'); statusText='🔄 需複檢';
+  }
+  badge.textContent = statusText;
+  document.getElementById('hdrStatus').textContent = answered < total ? '測試中' : ng===0 ? 'PASS' : criticalNg ? 'FAIL' : '需複檢';
+
+  // NG panel
+  const hasNg = ng > 0;
+  document.getElementById('noNgCard').style.display = hasNg ? 'none' : 'block';
+  document.getElementById('ngSection').style.display = hasNg ? 'block' : 'none';
+  if (hasNg) {
+    document.getElementById('ngList').innerHTML = ngItems.map(item=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border:1px solid var(--danger-l);border-radius:8px;margin-bottom:6px;font-size:13px">
+        ${item.critical?'<span style="color:var(--danger);font-weight:700">●</span>':'<span style="color:var(--warn)">●</span>'}
+        <span style="color:var(--muted);font-size:11px;font-weight:700">${item.block}</span>
+        <span>${item.name}</span>
+        ${item.critical?'<span class="crit-tag" style="margin-left:auto">關鍵</span>':''}
+      </div>`).join('');
+  }
+
+  // Step 1 done
+  if (answered === total) {
+    document.getElementById('step1').classList.add('done');
+  }
+
+  checkAutoIncident(criticalNg);
+}
+
+function checkAutoIncident(hasCriticalNg) {
+  const blockDelivery = document.getElementById('blockDelivery')?.value;
+  const autoTag = document.getElementById('incidentAutoTag');
+  if (hasCriticalNg || blockDelivery === '是') {
+    autoTag.style.display = 'inline-flex';
+  } else {
+    autoTag.style.display = 'none';
+  }
+}
+
+// ── NAVIGATION ──
+function goSection(idx) {
+  document.querySelectorAll('.section').forEach((s,i) => {
+    s.classList.toggle('active', i===idx);
+  });
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.toggle('active', i===idx);
+  });
+  if (idx===3) calculate();
+  if (idx===4) renderHistory();
+  currentSection = idx;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── PRODUCT CHANGE ──
+function onProductChange() {
+  const val = document.getElementById('productType').value;
+  document.getElementById('fwStandard').textContent = FW_STANDARDS[val] || '─';
+}
+
+// ── COLLECT DATA ──
+function collectData() {
+  const data = {
+    qc_id: document.getElementById('qcId').value,
+    test_date: document.getElementById('testDate').value,
+    tester: document.getElementById('tester').value,
+    site: document.getElementById('site').value,
+    product_type: document.getElementById('productType').value,
+    serial_no: document.getElementById('serialNo').value,
+    bluetooth_name: document.getElementById('btName').value,
+    fw_version: document.getElementById('fwVersion').value,
+    final_status: document.getElementById('hdrStatus').textContent,
+    saved_at: new Date().toISOString(),
+    tests: []
+  };
+  TEST_BLOCKS.forEach(block => {
+    block.items.forEach((item,i) => {
+      const key = `${block.id}_${i}`;
+      const checked = document.querySelector(`input[name="t_${key}"]:checked`);
+      const note = document.querySelector(`input[name="note_${key}"]`)?.value||'';
+      data.tests.push({block:block.label, item:item.name, critical:item.critical, result:checked?checked.value:'', note});
+    });
+  });
+  return data;
+}
+
+// ── SAVE / EXPORT ──
+function saveDraft() {
+  const data = collectData();
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+  const existing = history.findIndex(h=>h.qc_id===data.qc_id);
+  if (existing>=0) history[existing]=data; else history.unshift(data);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0,50)));
+  alert(`✅ 已儲存草稿\nQC ID：${data.qc_id}`);
+}
+
+// Google Sheets 串接設定 — 部署 Apps Script 後把網址貼這裡
+const APPS_SCRIPT_URL = ''; // ← 貼上你的 Apps Script 網址
+
+async function sendToSheets(data) {
+  if (!APPS_SCRIPT_URL) return { skipped: true };
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch(err) {
+    return { error: err.message };
+  }
+}
+
+async function submitQC() {
+  const data = collectData();
+  // 1. 儲存本機
+  saveDraft();
+  document.getElementById('step3').classList.add('done');
+
+  // 2. 送出到 Google Sheets
+  const btn = document.querySelector('[onclick="submitQC()"]');
+  if (btn) { btn.textContent = '⏳ 送出中…'; btn.disabled = true; }
+
+  const result = await sendToSheets(data);
+
+  if (btn) { btn.textContent = '✅ 確認送出'; btn.disabled = false; }
+
+  if (result.skipped) {
+    alert('✅ 已儲存至本機\n\n⚠️ 尚未設定 Google Sheets 網址\n請在 HTML 裡填入 APPS_SCRIPT_URL 即可自動同步');
+  } else if (result.error) {
+    alert(`✅ 已儲存至本機\n\n❌ Google Sheets 送出失敗：\n${result.error}`);
+  } else {
+    alert(`✅ QC 紀錄已送出！\n\nQC ID：${data.qc_id}\nGoogle Sheets 已同步 ✓`);
+  }
+  goSection(4);
+}
+
+function exportJSON() {
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`${data.qc_id||'qc'}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllJSON() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+  const blob = new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`qc_history_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── HISTORY & ANALYSIS ──
+function renderHistory() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+  const list = document.getElementById('historyList');
+
+  // Stats
+  const pass = history.filter(h=>h.final_status==='PASS').length;
+  const fail = history.filter(h=>h.final_status==='FAIL').length;
+  const review = history.filter(h=>h.final_status==='需複檢').length;
+  document.getElementById('hTotalCount').textContent = history.length;
+  document.getElementById('hPassCount').textContent = pass;
+  document.getElementById('hFailCount').textContent = fail;
+  document.getElementById('hReviewCount').textContent = review;
+  document.getElementById('hPassRate').textContent = history.length ? Math.round(pass/history.length*100)+'%' : '─';
+
+  // NG Chart
+  const ngMap = {};
+  history.forEach(h=>{
+    (h.tests||[]).filter(t=>t.result==='NG').forEach(t=>{
+      const key = t.block||'其他';
+      ngMap[key]=(ngMap[key]||0)+1;
+    });
+  });
+  const maxNg = Math.max(...Object.values(ngMap),1);
+  document.getElementById('ngChart').innerHTML = Object.entries(ngMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,val])=>`
+    <div class="chart-row">
+      <div class="chart-label">${label.replace(/^[A-Z]\. /,'')}</div>
+      <div class="chart-track"><div class="chart-fill chart-fill-ng" style="width:${val/maxNg*100}%"></div></div>
+      <div class="chart-val">${val}</div>
+    </div>`).join('') || '<div style="font-size:13px;color:var(--muted)">尚無 NG 資料</div>';
+
+  // Tester Chart
+  const tMap = {};
+  history.forEach(h=>{const t=h.tester||'未知';tMap[t]=(tMap[t]||0)+1;});
+  const maxT = Math.max(...Object.values(tMap),1);
+  document.getElementById('testerChart').innerHTML = Object.entries(tMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,val])=>`
+    <div class="chart-row">
+      <div class="chart-label">${label}</div>
+      <div class="chart-track"><div class="chart-fill" style="width:${val/maxT*100}%"></div></div>
+      <div class="chart-val">${val}</div>
+    </div>`).join('') || '<div style="font-size:13px;color:var(--muted)">尚無資料</div>';
+
+  // History list
+  if (!history.length) {
+    list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">尚無本機歷程紀錄</div>';
+    return;
+  }
+  list.innerHTML = history.map(h=>{
+    const s = h.final_status||'─';
+    const cls = s==='PASS'?'h-pass':s.includes('FAIL')?'h-fail':s==='需複檢'?'h-review':'h-pending';
+    return `<div class="history-item">
+      <div class="h-id">${h.qc_id||'─'}</div>
+      <div class="h-info">${h.test_date||'─'} ｜ ${h.product_type||'─'} ｜ ${h.serial_no||'─'} ｜ ${h.tester||'─'}</div>
+      <div class="h-status ${cls}">${s}</div>
+    </div>`;
+  }).join('');
+}
+
+function clearHistory() {
+  if (!confirm('確定要清除所有本機歷程紀錄？此動作無法復原。')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+}
+
+// ── INIT ──
+function init() {
+  const now = new Date();
+  const ts = now.toISOString().replace(/[-:.TZ]/g,'').slice(0,14);
+  document.getElementById('qcId').value = `QC-${ts}`;
+  document.getElementById('hdrQcId').textContent = `QC-${ts}`;
+  document.getElementById('testDate').valueAsDate = now;
+  buildTests();
+  calculate();
+}
+
+init();
+</script>
+</body>
+</html>
