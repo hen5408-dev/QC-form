@@ -317,6 +317,11 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 
 <!-- ════════ SECTION 1：測試項目 ════════ -->
 <section class="section" id="sec1">
+  <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--primary-p),#fff);border:1.5px solid var(--primary-l);border-radius:12px;padding:12px 20px;margin-bottom:14px">
+    <span style="font-size:20px">📦</span>
+    <span style="font-size:13px;color:var(--muted);font-weight:700">目前測試產品</span>
+    <span id="sec1ProductBadge" style="font-size:15px;font-weight:900;color:var(--primary-d);background:var(--primary-p);border:1.5px solid var(--primary-l);padding:4px 16px;border-radius:20px;margin-left:4px">─</span>
+  </div>
   <div class="card">
     <div class="card-head"><div class="card-icon">🧪</div><div><div class="card-title">QC 測試項目</div><div class="card-sub">紅色 <span style="color:var(--danger);font-weight:700">關鍵</span> 項目 NG → 自動判定 FAIL</div></div></div>
     <div id="testSetNotice" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;background:var(--g50);border:2px dashed var(--border);border-radius:14px;margin-bottom:16px;text-align:center">
@@ -431,7 +436,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 <!-- ════════ SECTION 4：歷程分析 ════════ -->
 <section class="section" id="sec4">
   <div class="card">
-    <div class="card-head"><div class="card-icon">📈</div><div><div class="card-title">QC 歷程分析</div><div class="card-sub">本機紀錄（最多 50 筆）</div></div></div>
+    <div class="card-head"><div class="card-icon">📈</div><div><div class="card-title">QC 歷程分析</div><div class="card-sub">本機紀錄（最多 100 筆）</div></div></div>
     <div class="stats" style="margin-bottom:20px">
       <div class="stat"><div class="stat-label">總次數</div><div class="stat-val" id="hTotalCount" style="color:var(--text)">0</div></div>
       <div class="stat stat-ok"><div class="stat-label">PASS</div><div class="stat-val" id="hPassCount">0</div></div>
@@ -454,7 +459,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
     <div id="historyList"></div>
     <div class="actions" style="margin-top:16px">
       <button class="btn btn-ghost" onclick="clearHistory()">🗑️ 清除本機歷程</button>
-      <button class="btn btn-ghost" onclick="exportAllJSON()">📥 匯出所有歷程</button>
+      <button class="btn btn-ghost" onclick="exportAllJSON()">📥 匯出 CSV</button>
     </div>
   </div>
 </section>
@@ -827,7 +832,7 @@ function calculate() {
         if (checked.value==='NG') {
           ng++;
           if (item.critical) criticalNg = true;
-          ngItems.push({block:block.label, name:item.name, critical:item.critical});
+          ngItems.push({block:block.label, name:item.name, negName:negateItemName(item.name), no:item.no||'', critical:item.critical});
         }
         if (checked.value==='NA') na++;
       }
@@ -869,11 +874,11 @@ function calculate() {
   document.getElementById('ngSection').style.display = hasNg ? 'block' : 'none';
   if (hasNg) {
     document.getElementById('ngList').innerHTML = ngItems.map(item=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border:1px solid var(--danger-l);border-radius:8px;margin-bottom:6px;font-size:13px">
+      <div style="display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:8px;padding:10px 12px;background:#fff;border:1px solid var(--danger-l);border-radius:8px;margin-bottom:6px;font-size:13px">
         ${item.critical?'<span style="color:var(--danger);font-weight:700">●</span>':'<span style="color:var(--warn)">●</span>'}
-        <span style="color:var(--muted);font-size:11px;font-weight:700">${item.block}</span>
-        <span>${item.name}</span>
-        ${item.critical?'<span class="crit-tag" style="margin-left:auto">關鍵</span>':''}
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-p);padding:1px 7px;border-radius:5px">${item.no}</span>
+        <span style="color:var(--danger);font-weight:700">${item.negName}</span>
+        ${item.critical?'<span class="crit-tag" style="margin-left:auto">關鍵</span>':'<span style="margin-left:auto"></span>'}
       </div>`).join('');
   }
 
@@ -932,14 +937,16 @@ function switchTestSet(productVal, productText) {
     shirt: '紅光衣'
   };
 
+  // Update product badge on step 2
+  const badge = document.getElementById('sec1ProductBadge');
+  if (badge) badge.textContent = labels[productVal] || productText || '─';
+
   if (TEST_SETS[productVal]) {
-    // 有對應測試組 → 載入並顯示
     TEST_BLOCKS = TEST_SETS[productVal];
     if (notice) notice.style.display = 'none';
     buildTests();
     calculate();
   } else {
-    // 尚未建立測試組 → 顯示提示卡
     TEST_BLOCKS = [];
     wrap.innerHTML = '';
     if (notice) notice.style.display = 'flex';
@@ -979,7 +986,7 @@ function saveDraft() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
   const existing = history.findIndex(h=>h.qc_id===data.qc_id);
   if (existing>=0) history[existing]=data; else history.unshift(data);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0,50)));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0,100)));
   alert(`✅ 已儲存草稿\nQC ID：${data.qc_id}`);
 }
 
@@ -1035,10 +1042,28 @@ function exportJSON() {
 
 function exportAllJSON() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
-  const blob = new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
+  if (!history.length) { alert('尚無歷程紀錄'); return; }
+
+  // Build CSV
+  const headers = ['QC ID','測試日期','測試人員','地區','產品類型','產品序號','藍牙名稱','韌體版本','總項目','OK','NG','NA','完成率','QC結果','影響出貨','問題分類','異常描述','備註','送出時間'];
+  const rows = history.map(h => [
+    h.qc_id||'', h.test_date||'', h.tester||'', h.site||'',
+    h.product_type||'', h.serial_no||'', h.bluetooth_name||'', h.fw_version||'',
+    (h.tests||[]).length,
+    (h.tests||[]).filter(t=>t.result==='OK').length,
+    (h.tests||[]).filter(t=>t.result==='NG').length,
+    (h.tests||[]).filter(t=>t.result==='NA').length,
+    (h.tests||[]).length ? Math.round(((h.tests||[]).filter(t=>t.result).length)/(h.tests||[]).length*100)+'%' : '─',
+    h.final_status||'', h.block_delivery||'', h.issue_l2||'',
+    h.issue_description||'', h.final_note||'', h.saved_at||''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`));
+
+  const csv = '﻿' + [headers, ...rows].map(r=>r.join(',')).join('
+');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download=`qc_history_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  a.href=url; a.download=`QC歷程_${new Date().toISOString().slice(0,10)}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -1111,6 +1136,45 @@ function updateBtName(suffix) {
   const full = 'Wise Balance-' + suffix.toUpperCase();
   document.getElementById('btName').value = full;
   document.getElementById('btPreview').textContent = full || 'Wise Balance-';
+}
+
+// ── 將測試項目文字轉為負面描述 ──
+function negateItemName(name) {
+  const rules = [
+    [/無明顯瑕疵[（(][^）)]+[）)]/g, '有明顯瑕疵'],
+    [/無明顯瑕疵/g, '有明顯瑕疵'],
+    [/無破裂/g, '有破裂'],
+    [/無破裂損傷/g, '有破裂損傷'],
+    [/無污漬/g, '有污漬'],
+    [/無損壞/g, '有損壞'],
+    [/無出現亂碼/g, '出現亂碼'],
+    [/無接觸不良/g, '接觸不良'],
+    [/可插到底/g, '無法插到底'],
+    [/可正常開啟、結束/g, '無法正常開啟或結束'],
+    [/可正常使用/g, '無法正常使用'],
+    [/可正常重連/g, '無法正常重連'],
+    [/可正常開機/g, '無法正常開機'],
+    [/可正常關機/g, '無法正常關機'],
+    [/正常開機/g, '開機異常'],
+    [/正常關機/g, '關機異常'],
+    [/基本資料正確/g, '基本資料有誤'],
+    [/時間正確/g, '時間有誤'],
+    [/都有以貼紙覆蓋/g, '未以貼紙覆蓋'],
+    [/貼片數量：確認共 (\d+) 片/g, '貼片數量不正確（應為 $1 片）'],
+    [/一次亮 ([\d～]+) 片/g, '亮片數量異常（應為 $1 片）'],
+    [/持續輸出/g, '輸出異常（閃爍）'],
+    [/符合出貨標準/g, '不符合出貨標準'],
+    [/確認共 12 片/g, '片數不足或超過（應為12片）'],
+    [/燈號從紅轉綠/g, '燈號未從紅轉綠'],
+    [/乾淨、/g, ''],
+  ];
+  let result = name;
+  for (const [pattern, replacement] of rules) {
+    result = result.replace(pattern, replacement);
+  }
+  // Generic fallback: prefix with 異常
+  if (result === name) result = '【異常】' + name;
+  return result;
 }
 
 // ── INIT ──
