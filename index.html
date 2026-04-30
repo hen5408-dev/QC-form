@@ -1043,27 +1043,29 @@ function exportJSON() {
 function exportAllJSON() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
   if (!history.length) { alert('尚無歷程紀錄'); return; }
-
-  // Build CSV
+  const CRLF = '\r\n';
   const headers = ['QC ID','測試日期','測試人員','地區','產品類型','產品序號','藍牙名稱','韌體版本','總項目','OK','NG','NA','完成率','QC結果','影響出貨','問題分類','異常描述','備註','送出時間'];
-  const rows = history.map(h => [
-    h.qc_id||'', h.test_date||'', h.tester||'', h.site||'',
-    h.product_type||'', h.serial_no||'', h.bluetooth_name||'', h.fw_version||'',
-    (h.tests||[]).length,
-    (h.tests||[]).filter(t=>t.result==='OK').length,
-    (h.tests||[]).filter(t=>t.result==='NG').length,
-    (h.tests||[]).filter(t=>t.result==='NA').length,
-    (h.tests||[]).length ? Math.round(((h.tests||[]).filter(t=>t.result).length)/(h.tests||[]).length*100)+'%' : '─',
-    h.final_status||'', h.block_delivery||'', h.issue_l2||'',
-    h.issue_description||'', h.final_note||'', h.saved_at||''
-  ].map(v => `"${String(v).replace(/"/g,'""')}"`));
-
-  const csv = '﻿' + [headers, ...rows].map(r=>r.join(',')).join('
-');
+  const rows = history.map(function(h) {
+    return [
+      h.qc_id||'', h.test_date||'', h.tester||'', h.site||'',
+      h.product_type||'', h.serial_no||'', h.bluetooth_name||'', h.fw_version||'',
+      (h.tests||[]).length,
+      (h.tests||[]).filter(function(t){return t.result==='OK';}).length,
+      (h.tests||[]).filter(function(t){return t.result==='NG';}).length,
+      (h.tests||[]).filter(function(t){return t.result==='NA';}).length,
+      (h.tests||[]).length ? Math.round((h.tests||[]).filter(function(t){return t.result;}).length/(h.tests||[]).length*100)+'%' : '',
+      h.final_status||'', h.block_delivery||'', h.issue_l2||'',
+      h.issue_description||'', h.final_note||'', h.saved_at||''
+    ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; });
+  });
+  const allRows = [headers].concat(rows);
+  const csv = '\uFEFF' + allRows.map(function(r){return r.join(',');}).join(CRLF);
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download=`QC歷程_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.href = url;
+  a.download = 'QC歷程_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
   URL.revokeObjectURL(url);
 }
 
