@@ -204,6 +204,37 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 .charge-pill.na-c{font-style:italic;color:var(--muted)}
 .charge-pill.na-c.selected{background:var(--g200);border-color:var(--g200);color:var(--g600)}
 
+/* ── WORKSPACE TABS ── */
+.ws-bar{max-width:1160px;margin:16px auto 0;padding:0 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ws-tab{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  border-radius:10px 10px 0 0;border:2px solid var(--border);border-bottom:none;
+  cursor:pointer;font-size:13px;font-weight:700;background:var(--g100);color:var(--muted);
+  transition:.18s;position:relative;min-width:120px;
+}
+.ws-tab:hover{background:var(--g50);color:var(--text)}
+.ws-tab.active{background:var(--white);color:var(--primary);border-color:var(--primary-l);border-bottom:2px solid var(--white);z-index:2}
+.ws-tab.done{background:var(--ok-p);color:var(--ok);border-color:#86efac}
+.ws-tab.fail{background:var(--danger-p);color:var(--danger);border-color:var(--danger-l)}
+.ws-tab-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-tab-close{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;opacity:.5;transition:.15s}
+.ws-tab-close:hover{opacity:1;background:rgba(0,0,0,.1)}
+.ws-add-btn{
+  padding:8px 14px;border-radius:10px;border:2px dashed var(--border);
+  cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);
+  background:transparent;display:flex;align-items:center;gap:5px;transition:.18s;
+  font-family:var(--font);
+}
+.ws-add-btn:hover{border-color:var(--primary-l);color:var(--primary);background:var(--primary-p)}
+.ws-divider{max-width:1160px;margin:0 auto;padding:0 24px}
+.ws-divider-line{border:none;border-top:2px solid var(--primary-l);margin:0}
+.ws-serial-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-d));
+  color:#fff;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;
+  font-family:var(--mono);box-shadow:0 2px 8px rgba(26,122,74,.3);
+}
+
 /* ── RESPONSIVE ── */
 @media(max-width:860px){
   .grid4,.grid3,.stats{grid-template-columns:1fr 1fr}
@@ -230,6 +261,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
       <div class="hdr-sub">智平衡健康事業｜產品交付前品質驗證</div>
     </div>
     <div class="hdr-right">
+      <span class="hdr-badge" id="hdrWsCount" style="background:rgba(255,255,255,.15)">工作區 1/1</span>
       <span class="hdr-badge" id="hdrQcId">QC-─</span>
       <span class="hdr-badge" id="hdrStatus" style="background:rgba(255,255,255,.25)">未開始</span>
     </div>
@@ -237,8 +269,15 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
 </header>
 
+<!-- Workspace Bar -->
+<div class="ws-bar" id="wsBar">
+  <!-- tabs injected by JS -->
+  <button class="ws-add-btn" onclick="addWorkspace()">＋ 新增台次</button>
+</div>
+<div class="ws-divider"><hr class="ws-divider-line"></div>
+
 <!-- Step Nav -->
-<nav class="step-nav">
+<nav class="step-nav" id="stepNav">
   <div class="step active" id="step0" onclick="goSection(0)"><span class="step-num">1</span>基本資料</div>
   <div class="step" id="step1" onclick="goSection(1)"><span class="step-num">2</span>測試項目</div>
   <div class="step" id="step2" onclick="goSection(2)"><span class="step-num">3</span>異常紀錄</div>
@@ -318,10 +357,14 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 
 <!-- ════════ SECTION 1：測試項目 ════════ -->
 <section class="section" id="sec1">
-  <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--primary-p),#fff);border:1.5px solid var(--primary-l);border-radius:12px;padding:12px 20px;margin-bottom:14px">
+  <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--primary-p),#fff);border:1.5px solid var(--primary-l);border-radius:12px;padding:12px 20px;margin-bottom:14px;flex-wrap:wrap">
     <span style="font-size:20px">📦</span>
     <span style="font-size:13px;color:var(--muted);font-weight:700">目前測試產品</span>
     <span id="sec1ProductBadge" style="font-size:15px;font-weight:900;color:var(--primary-d);background:var(--primary-p);border:1.5px solid var(--primary-l);padding:4px 16px;border-radius:20px;margin-left:4px">─</span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;color:var(--muted);font-weight:700">儀器序號</span>
+      <span class="ws-serial-badge" id="sec1SerialBadge">─</span>
+    </span>
   </div>
   <div class="card">
     <div class="card-head"><div class="card-icon">🧪</div><div><div class="card-title">QC 測試項目</div><div class="card-sub">紅色 <span style="color:var(--danger);font-weight:700">關鍵</span> 項目 NG → 自動判定 FAIL</div></div></div>
@@ -691,10 +734,14 @@ function buildTests() {
     // Section header
     const head = document.createElement('div');
     head.className = 'block-section-head';
+    const currentSerial = document.getElementById('serialNo')?.value || '─';
     head.innerHTML = `
       <span style="font-size:20px">${block.icon}</span>
       <span class="block-section-label">${block.label}</span>
-      <span style="margin-left:auto;font-family:var(--mono);font-size:11px;background:var(--primary);color:#fff;padding:2px 10px;border-radius:20px" id="block-badge-${block.id}">0/${block.items.length}</span>`;
+      <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <span class="ws-serial-badge block-serial-tag">📟 ${currentSerial}</span>
+        <span style="font-family:var(--mono);font-size:11px;background:var(--primary);color:#fff;padding:2px 10px;border-radius:20px" id="block-badge-${block.id}">0/${block.items.length}</span>
+      </span>`;
     wrap.appendChild(head);
 
     // Block note (e.g. C group instruction)
@@ -1010,24 +1057,30 @@ async function sendToSheets(data) {
 
 async function submitQC() {
   const data = collectData();
-  // 1. 儲存本機
   saveDraft();
+  // Update workspace status
+  if (workspaces[activeWsIdx]) {
+    const ng = parseInt(document.getElementById('ngCount').textContent) || 0;
+    const answered = parseInt(document.getElementById('completePct').textContent) || 0;
+    const badge = document.getElementById('finalBadge');
+    const t = badge ? badge.textContent : '';
+    workspaces[activeWsIdx].status = t.includes('PASS') ? 'pass' : t.includes('FAIL') ? 'fail' : t.includes('複檢') ? 'review' : 'pending';
+    workspaces[activeWsIdx].serial = data.serial_no || '';
+    renderWsTabs();
+  }
   document.getElementById('step3').classList.add('done');
 
-  // 2. 送出到 Google Sheets
   const btn = document.querySelector('[onclick="submitQC()"]');
   if (btn) { btn.textContent = '⏳ 送出中…'; btn.disabled = true; }
-
   const result = await sendToSheets(data);
-
   if (btn) { btn.textContent = '✅ 確認送出'; btn.disabled = false; }
 
   if (result.skipped) {
-    alert('✅ 已儲存至本機\n\n⚠️ 尚未設定 Google Sheets 網址\n請在 HTML 裡填入 APPS_SCRIPT_URL 即可自動同步');
+    alert('✅ 已儲存至本機\n\n⚠️ 尚未設定 Google Sheets 網址');
   } else if (result.error) {
-    alert(`✅ 已儲存至本機\n\n❌ Google Sheets 送出失敗：\n${result.error}`);
+    alert('✅ 已儲存至本機\n\n❌ Google Sheets 送出失敗：\n' + result.error);
   } else {
-    alert(`✅ QC 紀錄已送出！\n\nQC ID：${data.qc_id}\nGoogle Sheets 已同步 ✓`);
+    alert('✅ QC 紀錄已送出！\n\nQC ID：' + data.qc_id + '\nGoogle Sheets 已同步 ✓');
   }
   goSection(4);
 }
@@ -1182,18 +1235,221 @@ function negateItemName(name) {
 
 // ── INIT ──
 function init() {
-  const now = new Date();
-  const ts = now.toISOString().replace(/[-:.TZ]/g,'').slice(0,14);
-  const rand = Math.random().toString(36).substring(2,6).toUpperCase();
-  const qcId = `QC-${ts}-${rand}`;
+  const ws = workspaces[activeWsIdx];
+  const qcId = ws ? ws.id : genQcId();
   document.getElementById('qcId').value = qcId;
   document.getElementById('hdrQcId').textContent = qcId;
-  document.getElementById('testDate').valueAsDate = now;
+  document.getElementById('testDate').valueAsDate = new Date();
   onProductChange();
   calculate();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+
+// ════════════════════════════════════════════════
+// 工作區管理
+// ════════════════════════════════════════════════
+let workspaces = [];   // [{id, data, section, results}]
+let activeWsIdx = 0;
+
+function genQcId() {
+  const now = new Date();
+  const ts = now.toISOString().replace(/[-:.TZ]/g,'').slice(0,14);
+  const rand = Math.random().toString(36).substring(2,6).toUpperCase();
+  return 'QC-' + ts + '-' + rand;
+}
+
+function createWorkspace() {
+  const now = new Date();
+  const qcId = genQcId();
+  return {
+    id: qcId,
+    section: 0,
+    serial: '',
+    product: 'gen6',
+    productLabel: '第六代紅光控制器',
+    tester: '孫雅慧',
+    site: '創新研發辦公室',
+    testDate: now.toISOString().slice(0,10),
+    fwVersion: '0401',
+    btSuffix: '',
+    results: {},    // key -> 'OK'|'NG'|'NA'
+    charges: {},    // key -> val
+    notes: {},      // key -> text
+    finalNote: '',
+    issueL2: '',
+    blockDelivery: '',
+    issueDesc: '',
+    attachUrl: '',
+    status: 'pending'  // pending | pass | fail | review
+  };
+}
+
+function addWorkspace() {
+  // Save current before switching
+  if (workspaces.length > 0) saveCurrentWsState();
+  const ws = createWorkspace();
+  workspaces.push(ws);
+  activeWsIdx = workspaces.length - 1;
+  renderWsTabs();
+  loadWorkspace(activeWsIdx);
+  goSection(0);
+}
+
+function switchWorkspace(idx) {
+  if (idx === activeWsIdx) return;
+  saveCurrentWsState();
+  activeWsIdx = idx;
+  renderWsTabs();
+  loadWorkspace(idx);
+}
+
+function closeWorkspace(idx, e) {
+  e.stopPropagation();
+  if (workspaces.length === 1) { alert('至少需要保留一個工作區'); return; }
+  if (!confirm('確定要關閉這個工作區？')) return;
+  workspaces.splice(idx, 1);
+  if (activeWsIdx >= workspaces.length) activeWsIdx = workspaces.length - 1;
+  renderWsTabs();
+  loadWorkspace(activeWsIdx);
+}
+
+function renderWsTabs() {
+  const bar = document.getElementById('wsBar');
+  const addBtn = bar.querySelector('.ws-add-btn');
+  // Remove old tabs
+  bar.querySelectorAll('.ws-tab').forEach(t => t.remove());
+  workspaces.forEach((ws, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'ws-tab' + (i === activeWsIdx ? ' active' : '') +
+      (ws.status === 'pass' ? ' done' : ws.status === 'fail' ? ' fail' : '');
+    const serial = ws.serial || '未填序號';
+    const statusIcon = ws.status === 'pass' ? '✅' : ws.status === 'fail' ? '❌' : ws.status === 'review' ? '🔄' : '🔬';
+    tab.innerHTML = '<span class="ws-tab-label">' + statusIcon + ' 台' + (i+1) + '：' + serial + '</span>' +
+      '<span class="ws-tab-close" onclick="closeWorkspace(' + i + ', event)">✕</span>';
+    tab.onclick = function() { switchWorkspace(i); };
+    bar.insertBefore(tab, addBtn);
+  });
+  // Update header count
+  const countEl = document.getElementById('hdrWsCount');
+  if (countEl) countEl.textContent = '工作區 ' + (activeWsIdx+1) + '/' + workspaces.length;
+}
+
+function saveCurrentWsState() {
+  if (!workspaces[activeWsIdx]) return;
+  const ws = workspaces[activeWsIdx];
+  ws.section = currentSection;
+  ws.serial = document.getElementById('serialNo')?.value || '';
+  ws.product = document.getElementById('productType')?.value || 'gen6';
+  ws.productLabel = document.getElementById('productType')?.options[document.getElementById('productType')?.selectedIndex]?.text || '';
+  ws.tester = document.getElementById('tester')?.value || '';
+  ws.site = document.getElementById('site')?.value || '';
+  ws.testDate = document.getElementById('testDate')?.value || '';
+  ws.fwVersion = document.getElementById('fwVersion')?.value || '';
+  ws.btSuffix = document.getElementById('btSuffix')?.value || '';
+  ws.finalNote = document.querySelector('textarea[name="final_note"]')?.value || '';
+  ws.issueL2 = document.querySelector('select[name="issue_l2"]')?.value || '';
+  ws.blockDelivery = document.getElementById('blockDelivery')?.value || '';
+  ws.issueDesc = document.querySelector('textarea[name="issue_description"]')?.value || '';
+  ws.attachUrl = document.querySelector('input[name="attachment_url"]')?.value || '';
+  // Save test results
+  TEST_BLOCKS.forEach(function(block) {
+    block.items.forEach(function(item, i) {
+      const key = block.id + '_' + i;
+      const checked = document.querySelector('input[name="t_' + key + '"]:checked');
+      if (checked) ws.results[key] = checked.value;
+      const cnote = document.querySelector('input[name="note_' + key + '"]');
+      if (cnote) ws.notes[key] = cnote.value;
+      const cchecked = document.querySelector('input[name="c_' + key + '"]:checked');
+      if (cchecked) ws.charges[key] = cchecked.value;
+    });
+  });
+  // Save status from badge
+  const badge = document.getElementById('finalBadge');
+  if (badge) {
+    const t = badge.textContent;
+    ws.status = t.includes('PASS') ? 'pass' : t.includes('FAIL') ? 'fail' : t.includes('複檢') ? 'review' : 'pending';
+  }
+  renderWsTabs();
+}
+
+function loadWorkspace(idx) {
+  const ws = workspaces[idx];
+  if (!ws) return;
+  // Basic fields
+  document.getElementById('qcId').value = ws.id;
+  document.getElementById('hdrQcId').textContent = ws.id;
+  if (document.getElementById('tester')) document.getElementById('tester').value = ws.tester;
+  if (document.getElementById('site')) document.getElementById('site').value = ws.site;
+  if (document.getElementById('testDate')) document.getElementById('testDate').value = ws.testDate;
+  if (document.getElementById('fwVersion')) document.getElementById('fwVersion').value = ws.fwVersion;
+  if (document.getElementById('serialNo')) document.getElementById('serialNo').value = ws.serial;
+  if (document.getElementById('btSuffix')) {
+    document.getElementById('btSuffix').value = ws.btSuffix;
+    updateBtName(ws.btSuffix);
+  }
+  if (document.getElementById('productType')) {
+    document.getElementById('productType').value = ws.product;
+    onProductChange();
+  }
+  // Restore results after buildTests
+  setTimeout(function() {
+    TEST_BLOCKS.forEach(function(block) {
+      block.items.forEach(function(item, i) {
+        const key = block.id + '_' + i;
+        if (ws.results[key]) selectResult(key, ws.results[key]);
+        const cnote = document.querySelector('input[name="note_' + key + '"]');
+        if (cnote && ws.notes[key]) cnote.value = ws.notes[key];
+        if (ws.charges[key]) selectCharge(key, ws.charges[key]);
+      });
+    });
+    calculate();
+    updateSerialBadge();
+  }, 50);
+  // Other fields
+  if (document.querySelector('textarea[name="final_note"]'))
+    document.querySelector('textarea[name="final_note"]').value = ws.finalNote || '';
+  if (document.querySelector('select[name="issue_l2"]'))
+    document.querySelector('select[name="issue_l2"]').value = ws.issueL2 || '';
+  if (document.getElementById('blockDelivery'))
+    document.getElementById('blockDelivery').value = ws.blockDelivery || '';
+  if (document.querySelector('textarea[name="issue_description"]'))
+    document.querySelector('textarea[name="issue_description"]').value = ws.issueDesc || '';
+  if (document.querySelector('input[name="attachment_url"]'))
+    document.querySelector('input[name="attachment_url"]').value = ws.attachUrl || '';
+  updateSerialBadge();
+  const countEl = document.getElementById('hdrWsCount');
+  if (countEl) countEl.textContent = '工作區 ' + (activeWsIdx+1) + '/' + workspaces.length;
+}
+
+function updateSerialBadge() {
+  const serial = document.getElementById('serialNo')?.value || '─';
+  // Update top badge
+  const badge = document.getElementById('sec1SerialBadge');
+  if (badge) badge.textContent = serial || '─';
+  // Update all block header serial tags
+  document.querySelectorAll('.block-serial-tag').forEach(function(el) {
+    el.textContent = '📟 ' + (serial || '─');
+  });
+  // Update workspace tab
+  if (workspaces[activeWsIdx]) {
+    workspaces[activeWsIdx].serial = serial;
+    renderWsTabs();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Add first workspace
+  const ws = createWorkspace();
+  workspaces.push(ws);
+  renderWsTabs();
+  init();
+
+  // Watch serial input to update badge live
+  const serialInput = document.getElementById('serialNo');
+  if (serialInput) {
+    serialInput.addEventListener('input', updateSerialBadge);
+  }
+});
 </script>
 </body>
 </html>
