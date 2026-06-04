@@ -349,6 +349,15 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
         <div class="field-hint">出貨標準版本：<strong id="fwStandard">─</strong></div>
       </div>
     </div>
+    <!-- 機碼欄位：僅居家產品顯示 -->
+    <div id="machineCodeWrap" style="display:none;margin-top:14px">
+      <div style="max-width:260px">
+        <div class="field">
+          <label>機碼 <span style="font-size:11px;color:var(--muted);font-weight:400">（居家儀器專用）</span></label>
+          <input id="machineCode" name="machine_code" placeholder="請輸入機碼"/>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="actions">
     <button class="btn btn-primary btn-next" onclick="goSection(1)">開始測試 →</button>
@@ -473,6 +482,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
     <button class="btn btn-ghost" onclick="saveDraft()">💾 儲存草稿</button>
     <button class="btn btn-ghost" onclick="exportJSON()">📥 匯出 JSON</button>
     <button class="btn btn-ghost" onclick="window.print()">🖨️ 列印 / PDF</button>
+    <button class="btn btn-ghost" onclick="exportInventoryCSV()" style="border-color:var(--accent);color:var(--accent)">📦 匯出庫存格式</button>
     <button class="btn btn-primary" onclick="submitQC()">✅ 確認送出</button>
   </div>
 </section>
@@ -503,7 +513,8 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
     <div id="historyList"></div>
     <div class="actions" style="margin-top:16px">
       <button class="btn btn-ghost" onclick="clearHistory()">🗑️ 清除本機歷程</button>
-      <button class="btn btn-ghost" onclick="exportAllJSON()">📥 匯出 CSV</button>
+      <button class="btn btn-ghost" onclick="exportAllJSON()">📥 匯出歷程 CSV</button>
+      <button class="btn btn-ghost" onclick="exportAllInventoryCSV()" style="border-color:var(--accent);color:var(--accent)">📦 匯出所有庫存格式</button>
     </div>
   </div>
 </section>
@@ -968,6 +979,10 @@ function onProductChange() {
   const val = sel.value;
   const text = sel.options[sel.selectedIndex]?.text || '';
   document.getElementById('fwStandard').textContent = FW_STANDARDS[val] || '─';
+  // 機碼欄位：只有居家產品顯示
+  const isHome = (val === 'nc108' || val === 'sanyi');
+  const mcWrap = document.getElementById('machineCodeWrap');
+  if (mcWrap) mcWrap.style.display = isHome ? 'block' : 'none';
   switchTestSet(val, text);
 }
 
@@ -1010,9 +1025,11 @@ function collectData() {
     tester: document.getElementById('tester').value,
     site: document.getElementById('site').value,
     product_type: document.getElementById('productType').value,
+    product_val: document.getElementById('productType').value,
     serial_no: document.getElementById('serialNo').value,
     bluetooth_name: document.getElementById('btName').value,
     fw_version: document.getElementById('fwVersion').value,
+    machine_code: document.getElementById('machineCode')?.value || '',
     final_status: document.getElementById('hdrStatus').textContent,
     saved_at: new Date().toISOString(),
     tests: []
@@ -1119,6 +1136,70 @@ function exportAllJSON() {
   const a = document.createElement('a');
   a.href = url;
   a.download = 'QC歷程_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── 庫存格式 CSV 匯出 ──
+function buildInventoryRows(records) {
+  var isHome = function(pt) { return pt === 'nc108' || pt === 'sanyi'; };
+  return records.map(function(h) {
+    // 收集 NG 項目的負面描述
+    var ngDescs = (h.tests || [])
+      .filter(function(t) { return t.result === 'NG'; })
+      .map(function(t) { return t.negName || ('【NG】' + t.item); })
+      .join('；');
+    var issueNote = [ngDescs, h.issue_description || ''].filter(Boolean).join('；');
+    var productLabel = (h.product_type || '').replace('居家：', '');
+    return [
+      productLabel,
+      h.serial_no || '',
+      isHome(h.product_val || '') ? (h.machine_code || '') : '',
+      h.fw_version || '',
+      '庫存',
+      issueNote
+    ].map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; });
+  });
+}
+
+function exportInventoryCSV() {
+  // 只匯出目前工作區所有台次
+  var records = workspaces.map(function(ws) {
+    // 從 localStorage 找對應紀錄
+    var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return history.find(function(h) { return h.qc_id === ws.id; }) || null;
+  }).filter(Boolean);
+
+  if (!records.length) {
+    // 如果還沒送出，用目前填寫資料
+    records = [collectData()];
+  }
+
+  var CRLF = '\r\n';
+  var headers = ['機型', '儀器序號', '機碼', '版本', '使用狀態', '儀器紀錄'];
+  var rows = buildInventoryRows(records);
+  var csv = '\uFEFF' + [headers].concat(rows).map(function(r) { return r.join(','); }).join(CRLF);
+  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '儀器庫存_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllInventoryCSV() {
+  var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  if (!history.length) { alert('尚無歷程紀錄'); return; }
+  var CRLF = '\r\n';
+  var headers = ['機型', '儀器序號', '機碼', '版本', '使用狀態', '儀器紀錄'];
+  var rows = buildInventoryRows(history);
+  var csv = '\uFEFF' + [headers].concat(rows).map(function(r) { return r.join(','); }).join(CRLF);
+  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '儀器庫存_全部_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
