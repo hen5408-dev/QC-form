@@ -362,7 +362,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
     <span style="font-size:13px;color:var(--muted);font-weight:700">目前測試產品</span>
     <span id="sec1ProductBadge" style="font-size:15px;font-weight:900;color:var(--primary-d);background:var(--primary-p);border:1.5px solid var(--primary-l);padding:4px 16px;border-radius:20px;margin-left:4px">─</span>
     <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
-      <span style="font-size:13px;color:var(--muted);font-weight:700">儀器序號</span>
+      <span style="font-size:13px;color:var(--muted);font-weight:700">藍芽名稱</span>
       <span class="ws-serial-badge" id="sec1SerialBadge">─</span>
     </span>
   </div>
@@ -1322,9 +1322,10 @@ function renderWsTabs() {
     const tab = document.createElement('div');
     tab.className = 'ws-tab' + (i === activeWsIdx ? ' active' : '') +
       (ws.status === 'pass' ? ' done' : ws.status === 'fail' ? ' fail' : '');
-    const serial = ws.serial || '未填序號';
+    const btSuffix = ws.btSuffix || '';
+    const displayName = btSuffix ? 'WB-' + btSuffix.toUpperCase() : (ws.serial || '未填序號');
     const statusIcon = ws.status === 'pass' ? '✅' : ws.status === 'fail' ? '❌' : ws.status === 'review' ? '🔄' : '🔬';
-    tab.innerHTML = '<span class="ws-tab-label">' + statusIcon + ' 台' + (i+1) + '：' + serial + '</span>' +
+    tab.innerHTML = '<span class="ws-tab-label">' + statusIcon + ' 台' + (i+1) + '：' + displayName + '</span>' +
       '<span class="ws-tab-close" onclick="closeWorkspace(' + i + ', event)">✕</span>';
     tab.onclick = function() { switchWorkspace(i); };
     bar.insertBefore(tab, addBtn);
@@ -1423,16 +1424,19 @@ function loadWorkspace(idx) {
 
 function updateSerialBadge() {
   const serial = document.getElementById('serialNo')?.value || '─';
+  const btSuffix = document.getElementById('btSuffix')?.value || '';
+  const displayLabel = btSuffix ? 'Wise Balance-' + btSuffix.toUpperCase() : (serial || '─');
   // Update top badge
   const badge = document.getElementById('sec1SerialBadge');
-  if (badge) badge.textContent = serial || '─';
+  if (badge) badge.textContent = displayLabel;
   // Update all block header serial tags
   document.querySelectorAll('.block-serial-tag').forEach(function(el) {
-    el.textContent = '📟 ' + (serial || '─');
+    el.textContent = '📡 ' + displayLabel;
   });
   // Update workspace tab
   if (workspaces[activeWsIdx]) {
     workspaces[activeWsIdx].serial = serial;
+    workspaces[activeWsIdx].btSuffix = document.getElementById('btSuffix')?.value || '';
     renderWsTabs();
   }
 }
@@ -1446,9 +1450,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Watch serial input to update badge live
   const serialInput = document.getElementById('serialNo');
-  if (serialInput) {
-    serialInput.addEventListener('input', updateSerialBadge);
-  }
+  if (serialInput) serialInput.addEventListener('input', updateSerialBadge);
+  const btInput = document.getElementById('btSuffix');
+  if (btInput) btInput.addEventListener('input', updateSerialBadge);
 });
 </script>
 </body>
