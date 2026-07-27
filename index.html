@@ -9,26 +9,45 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f4f2;--card:#fff;--border:#e0e8e4;
-  --g50:#f7faf8;--g100:#e8f0eb;--g200:#c8dcd0;--g400:#7aab90;--g500:#4d8c6a;
+  --bg:#f2f4f7;--card:#fff;--border:#e2e5ec;
+  --g50:#f8f9fb;--g100:#eef0f5;--g200:#d0d5e2;--g400:#8892aa;--g500:#5a6480;
   --primary:#1a7a4a;--primary-d:#145e39;--primary-p:#eafaf1;--primary-l:#82e0aa;
   --accent:#f59e0b;--accent-p:#fffbeb;
+  --blue:#2563eb;--blue-p:#eff6ff;--blue-l:#93c5fd;
+  --purple:#7c3aed;--purple-p:#f5f3ff;--purple-l:#c4b5fd;
   --danger:#dc2626;--danger-p:#fff5f5;--danger-l:#fecaca;
   --ok:#16a34a;--ok-p:#f0fdf4;
   --warn:#d97706;--warn-p:#fffbeb;
-  --text:#1a2e23;--muted:#5a7a66;
+  --teal:#0891b2;--teal-p:#ecfeff;--teal-l:#67e8f9;
+  --text:#1e2433;--muted:#6b7494;
   --font:'Noto Sans TC',sans-serif;--mono:'JetBrains Mono',monospace;
-  --radius:14px;--shadow:0 2px 12px rgba(26,122,74,.08);--shadow-lg:0 8px 32px rgba(26,122,74,.12);
+  --radius:14px;--shadow:0 2px 12px rgba(30,36,51,.07);--shadow-lg:0 8px 32px rgba(30,36,51,.12);
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
 
 /* ── HEADER ── */
 .hdr{
-  background:linear-gradient(135deg,#1a7a4a 0%,#145e39 60%,#0e4429 100%);
+  background:linear-gradient(135deg,#1e3a5f 0%,#1a2e4a 50%,#0f1d30 100%);
   padding:0;position:sticky;top:0;z-index:100;
-  box-shadow:0 2px 20px rgba(14,68,41,.3);
+  box-shadow:0 2px 20px rgba(15,29,48,.4);
 }
-.hdr-inner{max-width:1160px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;gap:16px}
+.hdr-inner{max-width:1160px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hdr-search{display:flex;align-items:center;gap:0;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);border-radius:24px;overflow:hidden;transition:.2s}
+.hdr-search:focus-within{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4)}
+.hdr-search-input{background:transparent;border:none;outline:none;padding:7px 14px;font-size:13px;color:#fff;font-family:var(--font);width:180px}
+.hdr-search-input::placeholder{color:rgba(255,255,255,.5)}
+.hdr-search-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;transition:.15s;font-family:var(--font)}
+.hdr-search-btn:hover{background:rgba(255,255,255,.3)}
+/* search result modal */
+.hdr-search-modal{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  width:min(700px,95vw);background:var(--white);border-radius:16px;
+  box-shadow:0 16px 48px rgba(0,0,0,.2);z-index:2000;
+  display:none;max-height:70vh;overflow-y:auto;
+}
+.hdr-search-modal.open{display:block}
+.hsm-head{display:flex;align-items:center;gap:10px;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:1}
+.hsm-close{margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
 .hdr-icon{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:22px}
 .hdr-title{font-size:20px;font-weight:900;color:#fff;letter-spacing:-.3px}
 .hdr-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
@@ -43,8 +62,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .step-nav{max-width:1160px;margin:24px auto 0;padding:0 24px;display:flex;gap:6px}
 .step{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted);background:var(--card);border:2px solid transparent;transition:.2s}
 .step:hover{border-color:var(--primary-l)}
-.step.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.step.done{background:var(--ok-p);color:var(--ok);border-color:var(--primary-l)}
+.step.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.step.done{background:var(--ok-p);color:var(--ok);border-color:var(--ok)}
 .step-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
 .step.active .step-num{background:rgba(255,255,255,.3)}
 .step.done .step-num{background:var(--ok);color:#fff}
@@ -235,6 +254,75 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   font-family:var(--mono);box-shadow:0 2px 8px rgba(26,122,74,.3);
 }
 
+/* ── AUTOSAVE ── */
+.autosave-bar{
+  position:fixed;bottom:16px;right:20px;z-index:999;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:24px;padding:8px 16px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.1);font-size:13px;
+  color:var(--muted);transition:.3s;
+}
+.autosave-bar.saving{border-color:var(--primary-l);color:var(--primary)}
+.autosave-bar.saved{border-color:#86efac;color:var(--ok)}
+.autosave-dot{width:7px;height:7px;border-radius:50%;background:var(--g400);flex-shrink:0}
+.autosave-bar.saving .autosave-dot{background:var(--primary);animation:pulse 1s infinite}
+.autosave-bar.saved .autosave-dot{background:var(--ok)}
+
+/* ── SERIAL QUERY ── */
+.query-wrap{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+.query-input{
+  flex:1;border:2px solid var(--border);border-radius:12px;
+  padding:12px 18px;font-size:16px;font-family:var(--font);
+  outline:none;transition:.2s;background:var(--white);
+}
+.query-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,122,74,.1)}
+.query-btn{
+  padding:12px 24px;border-radius:12px;border:none;
+  background:var(--primary);color:#fff;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:var(--font);transition:.2s;white-space:nowrap;
+}
+.query-btn:hover{background:var(--primary-d);transform:translateY(-1px)}
+.query-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.timeline-wrap{margin-top:8px}
+.timeline-item{
+  display:grid;grid-template-columns:120px auto 1fr;gap:0;
+  position:relative;padding-bottom:0;
+}
+.timeline-item:not(:last-child)::before{
+  content:'';position:absolute;left:119px;top:28px;bottom:0;
+  width:2px;background:var(--border);z-index:0;
+}
+.tl-date{font-size:12px;color:var(--muted);padding:18px 16px 18px 0;text-align:right;font-family:var(--mono)}
+.tl-dot{
+  width:14px;height:14px;border-radius:50%;border:2px solid var(--white);
+  margin-top:20px;flex-shrink:0;position:relative;z-index:1;box-shadow:0 0 0 2px var(--border);
+}
+.tl-dot-pass{background:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+.tl-dot-fail{background:var(--danger);box-shadow:0 0 0 2px var(--danger)}
+.tl-dot-review{background:var(--warn);box-shadow:0 0 0 2px var(--warn)}
+.tl-dot-other{background:var(--g400);box-shadow:0 0 0 2px var(--g400)}
+.tl-card{
+  margin:10px 0 10px 16px;padding:14px 16px;border-radius:12px;
+  border:1px solid var(--border);background:var(--white);
+}
+.tl-card-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.tl-product{font-size:11px;font-weight:700;color:var(--muted);background:var(--g100);padding:2px 8px;border-radius:5px}
+.tl-result{font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px}
+.tl-pass{background:var(--ok-p);color:var(--ok)}
+.tl-fail{background:var(--danger-p);color:var(--danger)}
+.tl-review{background:var(--warn-p);color:var(--warn)}
+.tl-other{background:var(--g100);color:var(--g600)}
+.tl-ng-list{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.tl-ng-tag{font-size:11px;background:var(--danger-p);color:var(--danger);padding:2px 8px;border-radius:5px}
+.query-empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+.query-summary{
+  display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;
+  padding:14px 16px;background:var(--g50);border-radius:10px;border:1px solid var(--border);
+}
+.qs-item{font-size:13px;color:var(--muted)}
+.qs-item strong{color:var(--text)}
+
 /* ── DASHBOARD ── */
 .dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
 .dash-product-card{
@@ -336,10 +424,15 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
       <div class="hdr-title">QC 前測系統</div>
       <div class="hdr-sub">智平衡健康事業｜產品交付前品質驗證</div>
     </div>
+    <!-- 序號快查 -->
+    <div class="hdr-search" id="hdrSearchWrap">
+      <input id="hdrSerialInput" class="hdr-search-input" placeholder="🔍 輸入序號 / 藍芽快查"
+        onkeydown="if(event.key==='Enter') hdrQuickSearch()"
+        onclick="event.stopPropagation()"/>
+      <button class="hdr-search-btn" onclick="hdrQuickSearch()">查</button>
+    </div>
     <div class="hdr-right">
-      <span class="hdr-badge" id="hdrWsCount" style="background:rgba(255,255,255,.15)">工作區 1/1</span>
       <span class="hdr-badge" id="hdrQcId">QC-─</span>
-      <span class="hdr-badge" id="hdrStatus" style="background:rgba(255,255,255,.25)">未開始</span>
     </div>
   </div>
   <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
@@ -362,6 +455,17 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 </nav>
 
 <main>
+
+<!-- 暫存紀錄列（每頁頂部固定） -->
+<div id="quickSaveBar" style="max-width:1160px;margin:0 auto 14px;padding:0 24px">
+  <div style="display:flex;align-items:center;gap:10px;background:var(--blue-p);border:1.5px solid var(--blue-l);border-radius:12px;padding:10px 18px">
+    <span style="font-size:14px;color:var(--muted)">📌 隨時暫存，不需填完</span>
+    <button class="btn btn-ghost" onclick="quickSave()" style="padding:7px 16px;font-size:13px;display:flex;align-items:center;gap:6px">
+      💾 暫存紀錄
+    </button>
+    <span id="autosaveText" style="font-size:12px;color:var(--muted);margin-left:4px">尚未儲存</span>
+  </div>
+</div>
 
 <!-- ════════ SECTION 0：基本資料 ════════ -->
 <section class="section active" id="sec0">
@@ -687,7 +791,18 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   </div>
 </section>
 
-</main>
+<!-- 序號快查 Modal -->
+<div class="hdr-search-modal" id="hdrSearchModal">
+  <div class="hsm-head">
+    <span style="font-size:18px">🔍</span>
+    <div>
+      <div style="font-size:15px;font-weight:900" id="hsm-title">查詢結果</div>
+      <div style="font-size:12px;color:var(--muted)" id="hsm-sub"></div>
+    </div>
+    <button class="hsm-close" onclick="closeHdrSearch()">✕</button>
+  </div>
+  <div style="padding:16px 20px" id="hsm-body"></div>
+</div>
 
 <script>
 // ════════════════════════════════════════════════
@@ -1184,6 +1299,14 @@ function renderNgSummaryList() {
 
 // ── NAVIGATION ──
 function goSection(idx) {
+  // 切換前自動儲存
+  if (workspaces.length > 0) {
+    saveCurrentWsState();
+    saveDraft();
+    const now = new Date();
+    const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+    showAutosave('saved', '已儲存 ' + t);
+  }
   document.querySelectorAll('.section').forEach((s,i) => {
     s.classList.toggle('active', i===idx);
   });
@@ -1441,6 +1564,202 @@ function exportAllInventoryCSV() {
   a.download = '儀器庫存_全部_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── 快速儲存草稿 ──
+function quickSave() {
+  showAutosave('saving', '儲存中…');
+  saveCurrentWsState();
+  saveDraft();
+  setTimeout(function() {
+    const now = new Date();
+    const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+    showAutosave('saved', '已儲存 ' + t);
+  }, 400);
+}
+
+function showAutosave(state, text) {
+  const txt = document.getElementById('autosaveText');
+  if (!txt) return;
+  txt.textContent = text;
+  txt.style.color = state === 'saved' ? 'var(--ok)' : state === 'saving' ? 'var(--primary)' : 'var(--muted)';
+}
+
+// 自動儲存：每 30 秒 + 切換分頁時
+let _autoSaveTimer = null;
+function startAutoSave() {
+  if (_autoSaveTimer) clearInterval(_autoSaveTimer);
+  _autoSaveTimer = setInterval(function() {
+    if (workspaces.length > 0) {
+      saveCurrentWsState();
+      saveDraft();
+      const now = new Date();
+      const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+      showAutosave('saved', '自動儲存 ' + t);
+      setTimeout(function() {
+        showAutosave('', '已儲存');
+      }, 2000);
+    }
+  }, 30000);
+}
+
+// ── Header 快查 ──
+async function hdrQuickSearch() {
+  const keyword = (document.getElementById('hdrSerialInput')?.value || '').trim();
+  if (!keyword) return;
+  if (!APPS_SCRIPT_URL) { alert('尚未設定 APPS_SCRIPT_URL'); return; }
+
+  const modal = document.getElementById('hdrSearchModal');
+  const body  = document.getElementById('hsm-body');
+  const title = document.getElementById('hsm-title');
+  const sub   = document.getElementById('hsm-sub');
+
+  modal.classList.add('open');
+  body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">⏳ 查詢中…</div>';
+  title.textContent = '查詢結果';
+  sub.textContent = '關鍵字：' + keyword;
+
+  try {
+    const url = APPS_SCRIPT_URL + '?action=query&serial=' + encodeURIComponent(keyword);
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.records || !data.records.length) {
+      body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">查無符合紀錄「' + keyword + '」</div>';
+      return;
+    }
+
+    sub.textContent = '關鍵字：' + keyword + '　共 ' + data.records.length + ' 筆';
+    body.innerHTML = data.records.map(function(r) {
+      const result = r.qc_result || '─';
+      const icon = result === 'PASS' ? '✅' : result.includes('FAIL') ? '❌' : result === '需複檢' ? '🔄' : '🔬';
+      const badgeCls = result === 'PASS' ? 'tl-pass' : result.includes('FAIL') ? 'tl-fail' : result === '需複檢' ? 'tl-review' : 'tl-other';
+      const ngTags = r.ng_items ? r.ng_items.split('；').filter(Boolean).slice(0,3).map(function(s){
+        return '<span class="tl-ng-tag">'+s.substring(0,18)+'</span>';
+      }).join('') : '';
+      return '<div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+          +'<span style="font-size:16px">'+icon+'</span>'
+          +'<span class="tl-result '+badgeCls+'">'+result+'</span>'
+          +'<span style="font-size:12px;font-weight:700;color:var(--muted)">'+( r.product||'─' )+'</span>'
+          +'<span style="font-size:12px;color:var(--muted);margin-left:auto">'+( r.test_date||'─' )+'　'+( r.tester||'' )+'</span>'
+        +'</div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px">'
+          +'序號：<span style="font-family:var(--mono)">'+( r.serial_no||'─' )+'</span>'
+          +( r.bt_name ? '　藍芽：<span style="font-family:var(--mono)">'+r.bt_name+'</span>' : '' )
+          +( r.fw_version ? '　韌體：<span style="font-family:var(--mono)">'+r.fw_version+'</span>' : '' )
+        +'</div>'
+        +( ngTags ? '<div class="tl-ng-list">'+ngTags+'</div>' : '' )
+        +( r.issue_desc ? '<div style="font-size:12px;color:var(--g600);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">備註：'+r.issue_desc+'</div>' : '' )
+        +'</div>';
+    }).join('');
+  } catch(err) {
+    body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--danger)">查詢失敗：'+err.message+'</div>';
+  }
+}
+
+function closeHdrSearch() {
+  const modal = document.getElementById('hdrSearchModal');
+  if (modal) modal.classList.remove('open');
+}
+
+// 點 modal 外關閉
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('hdrSearchModal');
+  if (modal && modal.classList.contains('open') && !modal.contains(e.target) && !document.getElementById('hdrSearchWrap')?.contains(e.target)) {
+    modal.classList.remove('open');
+  }
+});
+
+// ── 序號查詢 ──
+async function doSerialQuery() {
+  const keyword = document.getElementById('serialQueryInput').value.trim();
+  if (!keyword) { alert('請輸入序號或藍芽名稱'); return; }
+  if (!APPS_SCRIPT_URL) { alert('尚未設定 APPS_SCRIPT_URL，無法查詢 Google Sheets'); return; }
+
+  document.getElementById('queryResult').style.display = 'none';
+  document.getElementById('queryEmpty').style.display = 'none';
+  document.getElementById('queryLoading').style.display = 'block';
+  document.getElementById('queryBtn').disabled = true;
+
+  try {
+    const url = APPS_SCRIPT_URL + '?action=query&serial=' + encodeURIComponent(keyword);
+    const res = await fetch(url);
+    const data = await res.json();
+
+    document.getElementById('queryLoading').style.display = 'none';
+    document.getElementById('queryBtn').disabled = false;
+
+    if (!data.records || !data.records.length) {
+      document.getElementById('queryEmpty').style.display = 'block';
+      return;
+    }
+    renderQueryResult(data.records, keyword);
+  } catch(err) {
+    document.getElementById('queryLoading').style.display = 'none';
+    document.getElementById('queryBtn').disabled = false;
+    alert('查詢失敗：' + err.message);
+  }
+}
+
+function clearQuery() {
+  document.getElementById('serialQueryInput').value = '';
+  document.getElementById('queryResult').style.display = 'none';
+  document.getElementById('queryEmpty').style.display = 'none';
+}
+
+function renderQueryResult(records, keyword) {
+  // Summary
+  const pass   = records.filter(r => r.qc_result === 'PASS').length;
+  const fail   = records.filter(r => r.qc_result && r.qc_result.includes('FAIL')).length;
+  const latest = records[records.length - 1];
+
+  document.getElementById('querySummary').innerHTML =
+    '<span class="qs-item">關鍵字：<strong>' + keyword + '</strong></span>'
+    + '<span class="qs-item">共 <strong>' + records.length + '</strong> 筆紀錄</span>'
+    + '<span class="qs-item">PASS：<strong style="color:var(--ok)">' + pass + '</strong></span>'
+    + (fail ? '<span class="qs-item">FAIL：<strong style="color:var(--danger)">' + fail + '</strong></span>' : '')
+    + '<span class="qs-item">最近測試：<strong>' + (latest.test_date || '─') + '</strong></span>'
+    + '<span class="qs-item">最近結果：<strong>' + (latest.qc_result || '─') + '</strong></span>';
+
+  // Timeline
+  document.getElementById('queryTimeline').innerHTML = records.map(function(r) {
+    const result = r.qc_result || '─';
+    const dotCls = result === 'PASS' ? 'tl-dot-pass'
+      : result.includes('FAIL') ? 'tl-dot-fail'
+      : result === '需複檢' ? 'tl-dot-review' : 'tl-dot-other';
+    const badgeCls = result === 'PASS' ? 'tl-pass'
+      : result.includes('FAIL') ? 'tl-fail'
+      : result === '需複檢' ? 'tl-review' : 'tl-other';
+    const icon = result === 'PASS' ? '✅' : result.includes('FAIL') ? '❌' : result === '需複檢' ? '🔄' : '🔬';
+    const ngTags = r.ng_items ? r.ng_items.split('；').filter(Boolean).slice(0,4).map(function(s) {
+      return '<span class="tl-ng-tag">' + s.substring(0,20) + '</span>';
+    }).join('') : '';
+
+    return '<div class="timeline-item">'
+      + '<div class="tl-date">' + (r.test_date || '─') + '</div>'
+      + '<div style="display:flex;flex-direction:column;align-items:center;padding-top:18px">'
+        + '<div class="tl-dot ' + dotCls + '"></div>'
+      + '</div>'
+      + '<div class="tl-card">'
+        + '<div class="tl-card-head">'
+          + '<span style="font-size:15px">' + icon + '</span>'
+          + '<span class="tl-result ' + badgeCls + '">' + result + '</span>'
+          + '<span class="tl-product">' + (r.product || '─') + '</span>'
+          + '<span style="font-size:12px;color:var(--muted);margin-left:auto">' + (r.tester || '') + (r.site ? ' · ' + r.site : '') + '</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--muted);margin-bottom:4px">'
+          + '序號：<span style="font-family:var(--mono)">' + (r.serial_no || '─') + '</span>'
+          + (r.bt_name ? '　藍芽：<span style="font-family:var(--mono)">' + r.bt_name + '</span>' : '')
+          + (r.fw_version ? '　韌體：<span style="font-family:var(--mono)">' + r.fw_version + '</span>' : '')
+        + '</div>'
+        + (ngTags ? '<div class="tl-ng-list">' + ngTags + '</div>' : '')
+        + (r.issue_desc ? '<div style="font-size:12px;color:var(--g600);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">備註：' + r.issue_desc + '</div>' : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  document.getElementById('queryResult').style.display = 'block';
 }
 
 // ── HISTORY & ANALYSIS ──
@@ -1865,6 +2184,7 @@ document.addEventListener("DOMContentLoaded", function() {
   if (serialInput) serialInput.addEventListener('input', updateSerialBadge);
   const btInput = document.getElementById('btSuffix');
   if (btInput) btInput.addEventListener('input', updateSerialBadge);
+  startAutoSave();
 });
 </script>
 </body>
