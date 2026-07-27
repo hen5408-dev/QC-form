@@ -1074,15 +1074,16 @@ function calculate() {
   });
 
   // Stats
-  document.getElementById('totalCount').textContent = total;
-  document.getElementById('okCount').textContent = ok;
-  document.getElementById('ngCount').textContent = ng;
-  document.getElementById('naCount').textContent = na;
-  document.getElementById('completePct').textContent = total ? Math.round(answered/total*100)+'%' : '─';
-  document.getElementById('progressText').textContent = `${answered} / ${total} 已填`;
+  const _set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  _set('totalCount', total);
+  _set('okCount', ok);
+  _set('ngCount', ng);
+  _set('naCount', na);
+  _set('completePct', total ? Math.round(answered/total*100)+'%' : '─');
+  _set('progressText', `${answered} / ${total} 已填`);
 
   // Progress bar
-  document.getElementById('progressBar').style.width = total ? (answered/total*100)+'%' : '0%';
+  const pb = document.getElementById('progressBar'); if(pb) pb.style.width = total ? (answered/total*100)+'%' : '0%';
 
   // Final status
   const badge = document.getElementById('finalBadge');
@@ -1098,12 +1099,12 @@ function calculate() {
     badge.classList.add('final-review'); statusText='🔄 需複檢';
   }
   badge.textContent = statusText;
-  document.getElementById('hdrStatus').textContent = answered < total ? '測試中' : ng===0 ? 'PASS' : criticalNg ? 'FAIL' : '需複檢';
+  const hdrS = document.getElementById('hdrStatus'); if(hdrS) hdrS.textContent = answered < total ? '測試中' : ng===0 ? 'PASS' : criticalNg ? 'FAIL' : '需複檢';
 
   // NG panel
   const hasNg = ng > 0;
-  document.getElementById('noNgCard').style.display = hasNg ? 'none' : 'block';
-  document.getElementById('ngSection').style.display = hasNg ? 'block' : 'none';
+  const noNg = document.getElementById('noNgCard'); if(noNg) noNg.style.display = hasNg ? 'none' : 'block';
+  const ngSec = document.getElementById('ngSection'); if(ngSec) ngSec.style.display = hasNg ? 'block' : 'none';
   if (hasNg) {
     document.getElementById('ngList').innerHTML = ngItems.length
       ? ngItems.map((item,idx)=>`
@@ -1199,10 +1200,11 @@ function goSection(idx) {
 // ── PRODUCT CHANGE ──
 function onProductChange() {
   const sel = document.getElementById('productType');
-  const val = sel.value;
+  if (!sel) return;
+  const val = sel.value || 'gen6';
   const text = sel.options[sel.selectedIndex]?.text || '';
-  const fwEl = document.getElementById('fwStandard'); if (fwEl) fwEl.textContent = FW_STANDARDS[val] || '─';
-  // 機碼欄位：只有居家產品顯示
+  const fwEl = document.getElementById('fwStandard');
+  if (fwEl) fwEl.textContent = FW_STANDARDS[val] || '─';
   const isHome = (val === 'nc108' || val === 'sanyi');
   const mcWrap = document.getElementById('machineCodeWrap');
   if (mcWrap) mcWrap.style.display = isHome ? 'block' : 'none';
