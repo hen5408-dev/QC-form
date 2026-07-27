@@ -1719,7 +1719,7 @@ function mergeRecords(sheetsRecords, localRecords) {
 
 // 渲染紀錄卡片（共用）
 function renderRecordCards(records) {
-  return records.map(function(r) {
+  return records.map(function(r, idx) {
     const result = r.qc_result || '─';
     const icon = result === 'PASS' ? '✅' : result.includes('FAIL') ? '❌' : result === '需複檢' ? '🔄' : result === '測試中' ? '🔬' : '📋';
     const badgeCls = result === 'PASS' ? 'tl-pass' : result.includes('FAIL') ? 'tl-fail' : result === '需複檢' ? 'tl-review' : 'tl-other';
@@ -1727,13 +1727,18 @@ function renderRecordCards(records) {
       return '<span class="tl-ng-tag">'+s.substring(0,18)+'</span>';
     }).join('') : '';
     const localTag = r.is_local ? '<span style="font-size:10px;background:var(--blue-p);color:var(--blue);padding:1px 7px;border-radius:5px;font-weight:700">本機</span>' : '';
+
+    // 儲存紀錄到全域供繼續編輯用
+    _lastQueryRecords[idx] = r;
+
     return '<div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
         +'<span style="font-size:16px">'+icon+'</span>'
         +'<span class="tl-result '+badgeCls+'">'+result+'</span>'
         +localTag
         +'<span style="font-size:12px;font-weight:700;color:var(--muted)">'+( r.product||'─' )+'</span>'
-        +'<span style="font-size:12px;color:var(--muted);margin-left:auto">'+( r.test_date||'─' )+'　'+( r.tester||'' )+'</span>'
+        +'<span style="font-size:12px;color:var(--muted)">'+( r.test_date||'─' )+'　'+( r.tester||'' )+'</span>'
+        +'<button onclick="loadRecordToWorkspace('+idx+')" style="margin-left:auto;padding:5px 14px;border-radius:8px;border:1.5px solid var(--primary);background:var(--primary-p);color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)">✏️ 繼續編輯</button>'
       +'</div>'
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px">'
         +'序號：<span style="font-family:var(--mono)">'+( r.serial_no||'─' )+'</span>'
@@ -1744,6 +1749,77 @@ function renderRecordCards(records) {
       +( r.issue_desc ? '<div style="font-size:12px;color:var(--g600);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">備註：'+r.issue_desc+'</div>' : '' )
       +'</div>';
   }).join('');
+}
+
+// 全域：存放最後查詢的紀錄
+var _lastQueryRecords = {};
+
+// 載入查詢紀錄到工作區繼續編輯
+function loadRecordToWorkspace(idx) {
+  const r = _lastQueryRecords[idx];
+  if (!r) return;
+
+  closeHdrSearch();
+
+  // 找本機對應的完整暫存（有完整 tests 資料）
+  const localFull = (function() {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return history.find(function(h) { return h.qc_id === r.qc_id; }) || null;
+  })();
+
+  // 決定用哪個 QC ID：本機有完整資料就沿用，否則建新的
+  const useExisting = localFull && r.qc_id;
+
+  // 建立新工作區或找現有的
+  var wsIdx = workspaces.findIndex(function(w) { return w.id === r.qc_id; });
+  if (wsIdx < 0) {
+    // 建新工作區
+    saveCurrentWsState();
+    const ws = createWorkspace();
+
+    // 對應產品類型
+    const PROD_VAL_MAP = {
+      '第六代紅光':'gen6','第六代紅光控制器':'gen6',
+      '第四代紅光':'gen4',
+      'NC108':'nc108','居家：NC108':'nc108',
+      '三合一':'sanyi','居家：三合一':'sanyi',
+      '智慧手錶':'watch','宏碁指環':'ring'
+    };
+    ws.product = r.product_val || PROD_VAL_MAP[r.product] || 'gen6';
+    ws.productLabel = r.product || ws.productLabel;
+    ws.serial = r.serial_no || '';
+    ws.btSuffix = (r.bt_name || '').replace('Wise Balance-','').replace('WiseBalance-','');
+    ws.tester = r.tester || ws.tester;
+    ws.testDate = r.test_date || ws.testDate;
+    ws.fwVersion = r.fw_version || ws.fwVersion;
+
+    // 如果本機有完整資料，帶入測試結果
+    if (localFull) {
+      ws.id = localFull.qc_id;
+      ws.finalNote = localFull.final_note || '';
+      ws.issueL2 = localFull.issue_l2 || '';
+      ws.blockDelivery = localFull.block_delivery || '';
+      ws.issueDesc = localFull.issue_description || '';
+      // 帶入測試結果
+      (localFull.tests || []).forEach(function(t, i) {
+        const key = t.no ? (t.no.split('-')[0] + '_' + (i)) : null;
+        if (t.result) ws.results[i] = t.result;
+      });
+    }
+
+    workspaces.push(ws);
+    wsIdx = workspaces.length - 1;
+  }
+
+  activeWsIdx = wsIdx;
+  renderWsTabs();
+  loadWorkspace(wsIdx);
+  goSection(0);
+
+  // 提示
+  setTimeout(function() {
+    showAutosave('saved', '已載入：' + (r.serial_no || r.bt_name || r.qc_id));
+  }, 200);
 }
 
 // 點 modal 外關閉
