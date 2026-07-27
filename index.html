@@ -693,7 +693,7 @@ const TEST_SETS = {
         {no:'D-03', name:'讀取訂單：確認模式細節（模式:1 漸變:4.0s 貼片:25% logo:50% 間隔:6h 治療:60min）', critical:true, light:'─', voice:'─'},
         {no:'D-04', name:'讀取 FW 版本：確認韌體版本符合出貨標準（以出貨單為主）', critical:true, light:'─', voice:'─'},
         {no:'D-05', name:'讀取音量：確認預設值為 25（音量控制 >> 音量值:25 >> 發送音量）', critical:false, light:'─', voice:'─'},
-        {no:'D-06', name:'合約到期確認：點選「檢查客戶合約」>> 從裝置讀取 >> 開始檢查（如有發生才動作）', critical:false, light:'─', voice:'─'},
+        {no:'D-06', name:'合約到期確認：點選「檢查客戶合約」>> 從裝置讀取 >> 開始檢查（如有發生才動作）', critical:false, light:'─', voice:'─', resultMode:'full'},
       ]
     },
     {
@@ -909,9 +909,10 @@ function buildTests() {
         ${block.items.map((item, i) => {
           const key = `${block.id}_${i}`;
 
-          // Result pills
+          // Result pills（item-level resultMode overrides block-level）
+          const itemResultMode = item.resultMode || resultMode;
           let resultPills = '';
-          if (resultMode === 'okng') {
+          if (itemResultMode === 'okng') {
             resultPills = `
               <label class="r-pill ok-pill" onclick="selectResult('${key}','OK')"><input type="radio" name="t_${key}" value="OK"/>OK</label>
               <label class="r-pill ng-pill" onclick="selectResult('${key}','NG')"><input type="radio" name="t_${key}" value="NG"/>NG</label>`;
