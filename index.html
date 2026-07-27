@@ -421,8 +421,8 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
       </div>
       <div class="field">
         <label>韌體版本</label>
-        <input id="fwVersion" name="fw_version" value="0401"/>
-        <div class="field-hint">出貨標準版本：<strong id="fwStandard">─</strong></div>
+        <input id="fwVersion" name="fw_version" placeholder="請輸入韌體版本"/>
+
       </div>
     </div>
     <!-- 機碼欄位：僅居家產品顯示 -->
@@ -1292,7 +1292,7 @@ function saveDraft() {
 }
 
 // Google Sheets 串接設定 — 部署 Apps Script 後把網址貼這裡
-const APPS_SCRIPT_URL = ''; // ← 貼上你的 Apps Script 網址
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1eHPumszlt8LFyTqqK5kdhGgvBUiX2NdOZFxR_LfwcE9KaRiN_9AxD1HNkNz6Ucv5/exec';
 
 async function sendToSheets(data) {
   if (!APPS_SCRIPT_URL) return { skipped: true };
