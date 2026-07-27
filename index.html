@@ -1378,7 +1378,7 @@ function collectData() {
     bluetooth_name: document.getElementById('btName').value,
     fw_version: document.getElementById('fwVersion').value,
     machine_code: document.getElementById('machineCode')?.value || '',
-    final_status: document.getElementById('hdrStatus').textContent,
+    final_status: (function(){ const b=document.getElementById('finalBadge'); if(!b) return ''; const t=b.textContent; return t.includes('PASS')?'PASS':t.includes('FAIL')?'FAIL':t.includes('複檢')?'需複檢':'未完成'; })(),
     ng_item_notes: (function() {
       var notes = {};
       // prefer summary notes from tab3
