@@ -461,26 +461,26 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   <!-- 有 NG -->
   <div id="ngSection" style="display:none">
 
-    <!-- NG 項目清單（自動帶入，每項可補充備註） -->
+    <!-- NG 項目清單 -->
     <div class="card incident-card" style="margin-bottom:16px">
       <div class="card-head">
         <div class="card-icon" style="background:#fef2f2">⚠️</div>
         <div>
-          <div class="card-title">NG 項目</div>
-          <div class="card-sub">自動帶入，可針對每項補充說明</div>
+          <div class="card-title">NG 項目清單</div>
+          <div class="card-sub">自動帶入，請針對每項填寫備註說明</div>
         </div>
         <div class="incident-auto-tag" id="incidentAutoTag" style="margin-left:auto;display:none">🔴 自動建立事件</div>
       </div>
       <div id="ngList"></div>
     </div>
 
-    <!-- 整體異常補充（只需填額外資訊） -->
+    <!-- 整體補充 -->
     <div class="card incident-card">
       <div class="card-head">
         <div class="card-icon" style="background:#fef2f2">📝</div>
         <div>
           <div class="card-title">整體補充</div>
-          <div class="card-sub">問題分類、影響出貨、附件</div>
+          <div class="card-sub">確認以上項目備註後，填寫整體資訊</div>
         </div>
       </div>
       <div class="grid3" style="margin-bottom:14px">
@@ -513,8 +513,8 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
         </div>
       </div>
       <div class="field">
-        <label>補充描述 <span style="font-size:11px;color:var(--muted);font-weight:400">（選填，各項已可個別備註）</span></label>
-        <textarea name="issue_description" placeholder="如有額外說明可在此補充" style="min-height:70px"></textarea>
+        <label>補充描述 <span style="font-size:11px;color:var(--muted);font-weight:400">（選填）有其他說明請補充於此</span></label>
+        <textarea name="issue_description" placeholder="例：已通知工程師，待確認後再出貨" style="min-height:80px"></textarea>
       </div>
     </div>
   </div>
@@ -1053,20 +1053,30 @@ function calculate() {
   document.getElementById('noNgCard').style.display = hasNg ? 'none' : 'block';
   document.getElementById('ngSection').style.display = hasNg ? 'block' : 'none';
   if (hasNg) {
-    document.getElementById('ngList').innerHTML = ngItems.map((item,idx)=>`
+    document.getElementById('ngList').innerHTML = ngItems.length
+      ? ngItems.map((item,idx)=>`
       <div class="ng-item-card">
-        <div class="ng-item-head">
-          ${item.critical?'<span style="color:var(--danger);font-weight:900;font-size:16px">●</span>':'<span style="color:var(--warn);font-size:16px">●</span>'}
-          <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-p);padding:2px 8px;border-radius:5px">${item.no}</span>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="color:var(--danger);font-weight:700;font-size:13px">${item.negName}</span>
-            ${item.critical?'<span class="crit-tag">關鍵</span>':''}
+        <div style="display:grid;grid-template-columns:18px auto 1fr auto;align-items:start;gap:10px;padding:14px 16px">
+          <span style="color:${item.critical?'var(--danger)':'var(--warn)'};font-weight:900;font-size:18px;line-height:1.2">●</span>
+          <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-p);padding:2px 8px;border-radius:5px;white-space:nowrap;margin-top:2px">${item.no}</span>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="color:var(--danger);font-weight:700;font-size:14px">${item.negName}</span>
+              ${item.critical?'<span class="crit-tag">關鍵</span>':''}
+            </div>
+            <textarea
+              id="ng_note_${idx}"
+              placeholder="備註說明（必填）：請描述此項異常的狀況或處理方式"
+              rows="2"
+              style="width:100%;border:2px solid var(--danger-l);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--font);resize:vertical;outline:none;background:#fff9f9;min-height:64px;color:var(--text)"
+              onfocus="this.style.borderColor='var(--danger)';this.style.background='#fff'"
+              onblur="this.style.borderColor='var(--danger-l)';this.style.background='#fff9f9'"
+            ></textarea>
           </div>
+          ${item.critical?'<span style="font-size:10px;color:var(--danger);font-weight:700;white-space:nowrap;margin-top:2px">⚠️ 必填</span>':'<span></span>'}
         </div>
-        <div class="ng-item-body">
-          <textarea placeholder="此項異常的備註 / 處理方式（選填）" rows="2" id="ng_note_${idx}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:var(--font);resize:none;outline:none;background:var(--g50);min-height:56px" onfocus="this.style.borderColor='var(--danger)';this.style.background='#fff'" onblur="this.style.borderColor='var(--border)';this.style.background='var(--g50)'"></textarea>
-        </div>
-      </div>`).join('');
+      </div>`).join('')
+      : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:14px">無 NG 項目</div>';
   }
 
   // Step 1 done
