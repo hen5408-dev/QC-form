@@ -269,6 +269,30 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 .history-table tr.row-pass td{border-left:3px solid var(--ok)}
 .history-table tr.row-fail td{border-left:3px solid var(--danger);background:#fff8f8}
 .history-table tr.row-review td{border-left:3px solid var(--warn)}
+.delivery-option{
+  flex:1;min-width:160px;border:2px solid var(--border);border-radius:12px;
+  padding:16px;cursor:pointer;transition:.2s;display:flex;flex-direction:column;
+  align-items:center;gap:6px;text-align:center;background:var(--white);user-select:none;
+}
+.delivery-option:hover{border-color:var(--primary-l)}
+.delivery-option input{display:none}
+.delivery-option.sel-ok{border-color:var(--ok);background:var(--ok-p)}
+.delivery-option.sel-review{border-color:var(--warn);background:var(--warn-p)}
+.delivery-option.sel-stop{border-color:var(--danger);background:var(--danger-p)}
+.delivery-icon{font-size:28px}
+.delivery-label{font-size:14px;font-weight:900;color:var(--text)}
+.delivery-desc{font-size:12px;color:var(--muted);line-height:1.4}
+.ng-summary-row{
+  display:grid;grid-template-columns:16px auto 1fr;gap:10px;align-items:start;
+  padding:14px 16px;border:1px solid var(--danger-l);border-radius:10px;
+  margin-bottom:10px;background:#fff9f9;
+}
+.ng-summary-row textarea{
+  width:100%;border:1px solid var(--border);border-radius:8px;
+  padding:8px 10px;font-size:13px;font-family:var(--font);
+  resize:vertical;outline:none;background:#fff;min-height:52px;
+}
+.ng-summary-row textarea:focus{border-color:var(--danger)}
 .ng-item-card{
   background:#fff;border:1px solid var(--danger-l);border-radius:10px;
   margin-bottom:10px;overflow:hidden;
@@ -474,47 +498,70 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
       <div id="ngList"></div>
     </div>
 
-    <!-- 整體補充 -->
+    <!-- 區塊1：出貨判斷 -->
+    <div class="card incident-card" style="margin-bottom:16px">
+      <div class="card-head">
+        <div class="card-icon" style="background:#fef2f2">🚚</div>
+        <div><div class="card-title">出貨判斷</div><div class="card-sub">根據 NG 項目，判斷此台儀器的出貨級別</div></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <label class="delivery-option" id="dopt-ok">
+          <input type="radio" name="block_delivery" value="可出貨" onchange="onDeliveryChange()"/>
+          <div class="delivery-icon">&#x2705;</div>
+          <div class="delivery-label">可出貨</div>
+          <div class="delivery-desc">測試通過或 NG 已修正</div>
+        </label>
+        <label class="delivery-option" id="dopt-review">
+          <input type="radio" name="block_delivery" value="需複檢後出貨" onchange="onDeliveryChange()"/>
+          <div class="delivery-icon">&#x1F504;</div>
+          <div class="delivery-label">需複檢後出貨</div>
+          <div class="delivery-desc">非關鍵 NG，需主管確認</div>
+        </label>
+        <label class="delivery-option" id="dopt-stop">
+          <input type="radio" name="block_delivery" value="不可出貨" onchange="onDeliveryChange()"/>
+          <div class="delivery-icon">&#x274C;</div>
+          <div class="delivery-label">不可出貨</div>
+          <div class="delivery-desc">有關鍵 NG，需退回修正</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 區塊2：NG 項目確認（帶入備註可修改） -->
+    <div class="card incident-card" style="margin-bottom:16px">
+      <div class="card-head">
+        <div class="card-icon" style="background:#fef2f2">&#x1F4CB;</div>
+        <div><div class="card-title">NG 項目確認</div><div class="card-sub">備註已自動帶入，可在此修改</div></div>
+      </div>
+      <div id="ngSummaryList"></div>
+    </div>
+
+    <!-- 區塊3：異常備註 + 附件 -->
     <div class="card incident-card">
       <div class="card-head">
-        <div class="card-icon" style="background:#fef2f2">📝</div>
-        <div>
-          <div class="card-title">整體補充</div>
-          <div class="card-sub">確認以上項目備註後，填寫整體資訊</div>
-        </div>
+        <div class="card-icon" style="background:#fef2f2">&#x1F4DD;</div>
+        <div><div class="card-title">異常備註 &amp; 附件</div><div class="card-sub">整體說明與附件連結</div></div>
       </div>
-      <div class="grid3" style="margin-bottom:14px">
-        <div class="field">
-          <label>問題分類 L2</label>
-          <select name="issue_l2">
-            <option value="">請選擇</option>
-            <option>藍牙連線問題</option>
-            <option>資料同步異常</option>
-            <option>韌體 / 版本異常</option>
-            <option>合約狀態異常</option>
-            <option>顯示 / 邏輯異常</option>
-            <option>硬體功能異常</option>
-            <option>充電 / 電量異常</option>
-            <option>其他</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>是否影響出貨</label>
-          <select id="blockDelivery" name="block_delivery" onchange="checkAutoIncident()">
-            <option value="">請選擇</option>
-            <option>是</option>
-            <option>否</option>
-            <option>需主管判斷</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>附件連結</label>
-          <input name="attachment_url" placeholder="照片 / 影片雲端連結"/>
-        </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>問題分類 L2</label>
+        <select name="issue_l2" style="max-width:300px">
+          <option value="">請選擇</option>
+          <option>藍牙連線問題</option>
+          <option>資料同步異常</option>
+          <option>韌體 / 版本異常</option>
+          <option>合約狀態異常</option>
+          <option>顯示 / 邏輯異常</option>
+          <option>硬體功能異常</option>
+          <option>充電 / 電量異常</option>
+          <option>其他</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>異常備註</label>
+        <textarea name="issue_description" placeholder="例：韌體版本不符，已通知工程師，待確認後再出貨" style="min-height:90px"></textarea>
       </div>
       <div class="field">
-        <label>補充描述 <span style="font-size:11px;color:var(--muted);font-weight:400">（選填）有其他說明請補充於此</span></label>
-        <textarea name="issue_description" placeholder="例：已通知工程師，待確認後再出貨" style="min-height:80px"></textarea>
+        <label>附件連結 <span style="font-size:11px;color:var(--muted);font-weight:400">照片 / 影片雲端連結</span></label>
+        <input name="attachment_url" placeholder="貼上 Google Drive、LINE 等連結"/>
       </div>
     </div>
   </div>
@@ -723,7 +770,7 @@ const TEST_SETS = {
       showCharge: false, resultMode: 'okng',
       items: [
         {no:'G-01', name:'紅光貼片：一次亮 12～16 片（目前統一為 12 片）', critical:true, light:'持續亮', voice:'─'},
-        {no:'G-02', name:'亮光模式：持續輸出（如遇閃爍則為異常）', critical:true, light:'持續亮', voice:'─'},
+        {no:'G-02', name:'亮光模式：需為恆亮（如遇閃爍，需回工程模式訂單做修正）', critical:true, light:'恆亮', voice:'─'},
       ]
     }
   ],
@@ -851,6 +898,7 @@ const FW_STANDARDS = {
 };
 
 let currentSection = 0;
+let _lastNgItems = [];
 const HISTORY_KEY = 'qc_history_v2';
 
 // ── BUILD TEST BLOCKS ──
@@ -1013,7 +1061,9 @@ function calculate() {
         if (checked.value==='NG') {
           ng++;
           if (item.critical) criticalNg = true;
-          ngItems.push({block:block.label, name:item.name, negName:negateItemName(item.name), no:item.no||'', critical:item.critical});
+          const ngEntry = {block:block.label, name:item.name, negName:negateItemName(item.name), no:item.no||'', critical:item.critical};
+          ngItems.push(ngEntry);
+          _lastNgItems = ngItems.slice();
         }
         if (checked.value==='NA') na++;
       }
@@ -1089,13 +1139,45 @@ function calculate() {
 }
 
 function checkAutoIncident(hasCriticalNg) {
-  const blockDelivery = document.getElementById('blockDelivery')?.value;
+  const checked = document.querySelector('input[name="block_delivery"]:checked');
+  const val = checked ? checked.value : '';
   const autoTag = document.getElementById('incidentAutoTag');
-  if (hasCriticalNg || blockDelivery === '是') {
-    autoTag.style.display = 'inline-flex';
-  } else {
-    autoTag.style.display = 'none';
+  if (autoTag) autoTag.style.display = (hasCriticalNg || val === '不可出貨') ? 'inline-flex' : 'none';
+}
+
+function onDeliveryChange() {
+  checkAutoIncident();
+  const checked = document.querySelector('input[name="block_delivery"]:checked');
+  const map = {'可出貨':['dopt-ok','sel-ok'],'需複檢後出貨':['dopt-review','sel-review'],'不可出貨':['dopt-stop','sel-stop']};
+  ['dopt-ok','dopt-review','dopt-stop'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('sel-ok','sel-review','sel-stop');
+  });
+  if (checked) {
+    var info = map[checked.value];
+    if (info) { var el = document.getElementById(info[0]); if (el) el.classList.add(info[1]); }
   }
+}
+
+function renderNgSummaryList() {
+  var wrap = document.getElementById('ngSummaryList');
+  if (!wrap) return;
+  var items = _lastNgItems || [];
+  if (!items.length) {
+    wrap.innerHTML = '<div style="padding:16px;color:var(--muted);font-size:13px">無 NG 項目</div>';
+    return;
+  }
+  wrap.innerHTML = items.map(function(item, idx) {
+    var prevNote = (document.getElementById('ng_note_' + idx) || {}).value || '';
+    return '<div class="ng-summary-row">'
+      + '<span style="color:' + (item.critical ? 'var(--danger)' : 'var(--warn)') + ';font-weight:900;font-size:16px;line-height:1">&#x25CF;</span>'
+      + '<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-p);padding:2px 8px;border-radius:5px;white-space:nowrap">' + item.no + '</span>'
+      + '<div style="display:flex;flex-direction:column;gap:6px">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--danger)">' + item.negName + (item.critical ? ' <span class="crit-tag">關鍵</span>' : '') + '</div>'
+        + '<textarea id="ng_sum_' + idx + '" placeholder="備註說明（可修改）">' + prevNote + '</textarea>'
+      + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 // ── NAVIGATION ──
@@ -1106,6 +1188,7 @@ function goSection(idx) {
   document.querySelectorAll('.step').forEach((s,i) => {
     s.classList.toggle('active', i===idx);
   });
+  if (idx===2) { setTimeout(renderNgSummaryList, 60); }
   if (idx===3) calculate();
   if (idx===4) renderHistory();
   currentSection = idx;
@@ -1172,9 +1255,16 @@ function collectData() {
     final_status: document.getElementById('hdrStatus').textContent,
     ng_item_notes: (function() {
       var notes = {};
-      document.querySelectorAll('[id^="ng_note_"]').forEach(function(el) {
-        if (el.value) notes[el.id.replace('ng_note_','')] = el.value;
+      // prefer summary notes from tab3
+      document.querySelectorAll('[id^="ng_sum_"]').forEach(function(el) {
+        var idx2 = el.id.replace('ng_sum_','');
+        if (el.value) notes[idx2] = el.value;
       });
+      if (!Object.keys(notes).length) {
+        document.querySelectorAll('[id^="ng_note_"]').forEach(function(el) {
+          if (el.value) notes[el.id.replace('ng_note_','')] = el.value;
+        });
+      }
       return notes;
     })(),
     saved_at: new Date().toISOString(),
