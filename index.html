@@ -1201,7 +1201,7 @@ function onProductChange() {
   const sel = document.getElementById('productType');
   const val = sel.value;
   const text = sel.options[sel.selectedIndex]?.text || '';
-  document.getElementById('fwStandard').textContent = FW_STANDARDS[val] || '─';
+  const fwEl = document.getElementById('fwStandard'); if (fwEl) fwEl.textContent = FW_STANDARDS[val] || '─';
   // 機碼欄位：只有居家產品顯示
   const isHome = (val === 'nc108' || val === 'sanyi');
   const mcWrap = document.getElementById('machineCodeWrap');
