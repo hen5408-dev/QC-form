@@ -426,7 +426,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
     </div>
     <!-- 序號快查 -->
     <div class="hdr-search" id="hdrSearchWrap">
-      <input id="hdrSerialInput" class="hdr-search-input" placeholder="🔍 輸入序號 / 藍芽快查"
+      <input id="hdrSerialInput" class="hdr-search-input" placeholder="🔍 輸入序號快查"
         onkeydown="if(event.key==='Enter') hdrQuickSearch()"
         onclick="event.stopPropagation()"/>
       <button class="hdr-search-btn" onclick="hdrQuickSearch()">查</button>
@@ -1299,13 +1299,17 @@ function renderNgSummaryList() {
 
 // ── NAVIGATION ──
 function goSection(idx) {
-  // 切換前自動儲存
+  // 切換前自動儲存本機
   if (workspaces.length > 0) {
     saveCurrentWsState();
     saveDraft();
     const now = new Date();
     const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
     showAutosave('saved', '已儲存 ' + t);
+  }
+  // 進入測試項目時，先送基本資料到 Sheets（狀態：測試中）
+  if (idx === 1) {
+    pushDraftToSheets();
   }
   document.querySelectorAll('.section').forEach((s,i) => {
     s.classList.toggle('active', i===idx);
@@ -1318,6 +1322,35 @@ function goSection(idx) {
   if (idx===4) renderHistory();
   currentSection = idx;
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// 送基本資料暫存到 Sheets（測試中狀態）
+async function pushDraftToSheets() {
+  if (!APPS_SCRIPT_URL) return;
+  const data = {
+    qc_id:          document.getElementById('qcId')?.value || '',
+    test_date:      document.getElementById('testDate')?.value || '',
+    tester:         document.getElementById('tester')?.value || '',
+    site:           document.getElementById('site')?.value || '',
+    product_type:   document.getElementById('productType')?.options[document.getElementById('productType')?.selectedIndex]?.text || '',
+    product_val:    document.getElementById('productType')?.value || 'gen6',
+    serial_no:      document.getElementById('serialNo')?.value || '',
+    bluetooth_name: document.getElementById('btName')?.value || '',
+    machine_code:   document.getElementById('machineCode')?.value || '',
+    fw_version:     document.getElementById('fwVersion')?.value || '',
+    final_status:   '測試中',
+    tests:          [],
+    is_draft:       true,
+  };
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) {
+    // 靜默失敗，不影響主流程
+  }
 }
 
 // ── PRODUCT CHANGE ──
@@ -1414,7 +1447,7 @@ function saveDraft() {
   const existing = history.findIndex(h=>h.qc_id===data.qc_id);
   if (existing>=0) history[existing]=data; else history.unshift(data);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0,100)));
-  alert(`✅ 已儲存草稿\nQC ID：${data.qc_id}`);
+  // 靜默儲存，不跳提醒
 }
 
 // Google Sheets 串接設定 — 部署 Apps Script 後把網址貼這裡
@@ -1596,9 +1629,6 @@ function startAutoSave() {
       const now = new Date();
       const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
       showAutosave('saved', '自動儲存 ' + t);
-      setTimeout(function() {
-        showAutosave('', '已儲存');
-      }, 2000);
     }
   }, 30000);
 }
@@ -1624,43 +1654,96 @@ async function hdrQuickSearch() {
     const res = await fetch(url);
     const data = await res.json();
 
-    if (!data.records || !data.records.length) {
+    // 合併本機暫存紀錄
+    const localRecords = getLocalRecordsByKeyword(keyword);
+    const allRecords = mergeRecords(data.records || [], localRecords);
+
+    if (!allRecords.length) {
       body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">查無符合紀錄「' + keyword + '」</div>';
       return;
     }
+    data.records = allRecords;
 
-    sub.textContent = '關鍵字：' + keyword + '　共 ' + data.records.length + ' 筆';
-    body.innerHTML = data.records.map(function(r) {
-      const result = r.qc_result || '─';
-      const icon = result === 'PASS' ? '✅' : result.includes('FAIL') ? '❌' : result === '需複檢' ? '🔄' : '🔬';
-      const badgeCls = result === 'PASS' ? 'tl-pass' : result.includes('FAIL') ? 'tl-fail' : result === '需複檢' ? 'tl-review' : 'tl-other';
-      const ngTags = r.ng_items ? r.ng_items.split('；').filter(Boolean).slice(0,3).map(function(s){
-        return '<span class="tl-ng-tag">'+s.substring(0,18)+'</span>';
-      }).join('') : '';
-      return '<div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">'
-        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
-          +'<span style="font-size:16px">'+icon+'</span>'
-          +'<span class="tl-result '+badgeCls+'">'+result+'</span>'
-          +'<span style="font-size:12px;font-weight:700;color:var(--muted)">'+( r.product||'─' )+'</span>'
-          +'<span style="font-size:12px;color:var(--muted);margin-left:auto">'+( r.test_date||'─' )+'　'+( r.tester||'' )+'</span>'
-        +'</div>'
-        +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px">'
-          +'序號：<span style="font-family:var(--mono)">'+( r.serial_no||'─' )+'</span>'
-          +( r.bt_name ? '　藍芽：<span style="font-family:var(--mono)">'+r.bt_name+'</span>' : '' )
-          +( r.fw_version ? '　韌體：<span style="font-family:var(--mono)">'+r.fw_version+'</span>' : '' )
-        +'</div>'
-        +( ngTags ? '<div class="tl-ng-list">'+ngTags+'</div>' : '' )
-        +( r.issue_desc ? '<div style="font-size:12px;color:var(--g600);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">備註：'+r.issue_desc+'</div>' : '' )
-        +'</div>';
-    }).join('');
+    sub.textContent = '關鍵字：' + keyword + '　共 ' + data.records.length + ' 筆' + (data.records.some(function(r){return r.is_local;}) ? '（含本機暫存）' : '');
+    body.innerHTML = renderRecordCards(data.records);
   } catch(err) {
-    body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--danger)">查詢失敗：'+err.message+'</div>';
+    // Sheets 查詢失敗，只顯示本機紀錄
+    const localRecords = getLocalRecordsByKeyword(keyword);
+    if (localRecords.length) {
+      sub.textContent = '關鍵字：' + keyword + '　共 ' + localRecords.length + ' 筆（本機）';
+      body.innerHTML = renderRecordCards(localRecords);
+    } else {
+      body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--danger)">查詢失敗且無本機紀錄：'+err.message+'</div>';
+    }
   }
 }
 
 function closeHdrSearch() {
   const modal = document.getElementById('hdrSearchModal');
   if (modal) modal.classList.remove('open');
+}
+
+// 從 localStorage 依關鍵字找紀錄
+function getLocalRecordsByKeyword(keyword) {
+  const kw = keyword.toLowerCase();
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  return history.filter(function(h) {
+    return (h.serial_no || '').toLowerCase().includes(kw)
+      || (h.bluetooth_name || '').toLowerCase().includes(kw);
+  }).map(function(h) {
+    return {
+      qc_id:      h.qc_id || '',
+      test_date:  h.test_date || '',
+      tester:     h.tester || '',
+      site:       h.site || '',
+      product:    h.product_type || '',
+      serial_no:  h.serial_no || '',
+      bt_name:    h.bluetooth_name || '',
+      fw_version: h.fw_version || '',
+      qc_result:  h.final_status || '',
+      ng_items:   (h.tests || []).filter(function(t){return t.result==='NG';}).map(function(t){return t.negName||t.item||'';}).join('；'),
+      issue_desc: h.issue_description || '',
+      is_local:   true,
+    };
+  });
+}
+
+// 合併 Sheets + 本機紀錄（去除重複 QC ID）
+function mergeRecords(sheetsRecords, localRecords) {
+  const sheetsIds = new Set(sheetsRecords.map(function(r){ return r.qc_id; }));
+  const onlyLocal = localRecords.filter(function(r){ return !sheetsIds.has(r.qc_id); });
+  const merged = sheetsRecords.concat(onlyLocal);
+  merged.sort(function(a, b) { return new Date(a.test_date) - new Date(b.test_date); });
+  return merged;
+}
+
+// 渲染紀錄卡片（共用）
+function renderRecordCards(records) {
+  return records.map(function(r) {
+    const result = r.qc_result || '─';
+    const icon = result === 'PASS' ? '✅' : result.includes('FAIL') ? '❌' : result === '需複檢' ? '🔄' : result === '測試中' ? '🔬' : '📋';
+    const badgeCls = result === 'PASS' ? 'tl-pass' : result.includes('FAIL') ? 'tl-fail' : result === '需複檢' ? 'tl-review' : 'tl-other';
+    const ngTags = r.ng_items ? r.ng_items.split('；').filter(Boolean).slice(0,3).map(function(s){
+      return '<span class="tl-ng-tag">'+s.substring(0,18)+'</span>';
+    }).join('') : '';
+    const localTag = r.is_local ? '<span style="font-size:10px;background:var(--blue-p);color:var(--blue);padding:1px 7px;border-radius:5px;font-weight:700">本機</span>' : '';
+    return '<div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+        +'<span style="font-size:16px">'+icon+'</span>'
+        +'<span class="tl-result '+badgeCls+'">'+result+'</span>'
+        +localTag
+        +'<span style="font-size:12px;font-weight:700;color:var(--muted)">'+( r.product||'─' )+'</span>'
+        +'<span style="font-size:12px;color:var(--muted);margin-left:auto">'+( r.test_date||'─' )+'　'+( r.tester||'' )+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px">'
+        +'序號：<span style="font-family:var(--mono)">'+( r.serial_no||'─' )+'</span>'
+        +( r.bt_name ? '　藍芽：<span style="font-family:var(--mono)">'+r.bt_name+'</span>' : '' )
+        +( r.fw_version ? '　韌體：<span style="font-family:var(--mono)">'+r.fw_version+'</span>' : '' )
+      +'</div>'
+      +( ngTags ? '<div class="tl-ng-list">'+ngTags+'</div>' : '' )
+      +( r.issue_desc ? '<div style="font-size:12px;color:var(--g600);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">備註：'+r.issue_desc+'</div>' : '' )
+      +'</div>';
+  }).join('');
 }
 
 // 點 modal 外關閉
