@@ -39,11 +39,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .hdr-search-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;transition:.15s;font-family:var(--font)}
 .hdr-search-btn:hover{background:rgba(255,255,255,.3)}
 /* search result modal */
+.hdr-search-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1999;
+}
+.hdr-search-backdrop.open{display:block}
 .hdr-search-modal{
-  position:fixed;top:70px;left:50%;transform:translateX(-50%);
-  width:min(700px,95vw);background:var(--white);border-radius:16px;
-  box-shadow:0 16px 48px rgba(0,0,0,.2);z-index:2000;
-  display:none;max-height:70vh;overflow-y:auto;
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(700px,95vw);background:#ffffff;border-radius:16px;
+  box-shadow:0 24px 64px rgba(0,0,0,.35);z-index:2000;
+  display:none;max-height:80vh;overflow-y:auto;
 }
 .hdr-search-modal.open{display:block}
 .hsm-head{display:flex;align-items:center;gap:10px;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:1}
@@ -792,6 +796,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 </section>
 
 <!-- 序號快查 Modal -->
+<div class="hdr-search-backdrop" id="hdrSearchBackdrop" onclick="closeHdrSearch()"></div>
 <div class="hdr-search-modal" id="hdrSearchModal">
   <div class="hsm-head">
     <span style="font-size:18px">🔍</span>
@@ -1645,6 +1650,8 @@ async function hdrQuickSearch() {
   const sub   = document.getElementById('hsm-sub');
 
   modal.classList.add('open');
+  const backdrop2 = document.getElementById('hdrSearchBackdrop');
+  if (backdrop2) backdrop2.classList.add('open');
   body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">⏳ 查詢中…</div>';
   title.textContent = '查詢結果';
   sub.textContent = '關鍵字：' + keyword;
@@ -1681,6 +1688,8 @@ async function hdrQuickSearch() {
 function closeHdrSearch() {
   const modal = document.getElementById('hdrSearchModal');
   if (modal) modal.classList.remove('open');
+  const backdrop = document.getElementById('hdrSearchBackdrop');
+  if (backdrop) backdrop.classList.remove('open');
 }
 
 // 從 localStorage 依關鍵字找紀錄
@@ -1822,13 +1831,7 @@ function loadRecordToWorkspace(idx) {
   }, 200);
 }
 
-// 點 modal 外關閉
-document.addEventListener('click', function(e) {
-  const modal = document.getElementById('hdrSearchModal');
-  if (modal && modal.classList.contains('open') && !modal.contains(e.target) && !document.getElementById('hdrSearchWrap')?.contains(e.target)) {
-    modal.classList.remove('open');
-  }
-});
+// 點 backdrop 關閉由 backdrop onclick 處理
 
 // ── 序號查詢 ──
 async function doSerialQuery() {
