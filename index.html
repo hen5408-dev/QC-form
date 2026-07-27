@@ -727,7 +727,7 @@ const TEST_SETS = {
         {no:'C-02', name:'按「開始」開始治療，貼片亮紅燈', critical:true, light:'白燈恆亮', voice:'「開始使用」'},
         {no:'C-03', name:'按「暫停」，貼片不亮紅燈，切換為暫停', critical:true, light:'白燈閃爍', voice:'「暫停使用」'},
         {no:'C-04', name:'調整音量後按「暫停」跟「開始」確認音量可調整', critical:false, light:'─', voice:'─'},
-        {no:'C-05', name:'連續使用至 60 分鐘療程完成，一分鐘後自動關機', critical:true, light:'關機/燈滅', voice:'「結束使用」+ 關機音效', chargeNote:'使用中不充電'},
+        {no:'C-05', name:'連續使用至 60 分鐘療程完成', critical:true, light:'關機/燈滅', voice:'「結束使用」+ 關機音效', chargeNote:'使用中不充電'},
         {no:'C-06', name:'按「關機」正常關機', critical:true, light:'燈滅', voice:'關機音效'},
       ]
     },
@@ -769,8 +769,9 @@ const TEST_SETS = {
       id: 'G', label: 'G. 紅光衣確認', icon: '👕',
       showCharge: false, resultMode: 'okng',
       items: [
-        {no:'G-01', name:'紅光貼片：一次亮 12～16 片（目前統一為 12 片）', critical:true, light:'持續亮', voice:'─'},
-        {no:'G-02', name:'亮光模式：需為恆亮（如遇閃爍，需回工程模式訂單做修正）', critical:true, light:'恆亮', voice:'─'},
+        {no:'G-01', name:'接觸不良偵測：有跳出【接頭接觸不良】提示音，並只出現一次（可能為接頭未插緊，或是紅光衣傳導有問題）', critical:true, light:'─', voice:'「接頭接觸不良」提示音'},
+        {no:'G-02', name:'紅光貼片：一次亮 12～16 片（目前統一為 12 片）', critical:true, light:'持續亮', voice:'─'},
+        {no:'G-03', name:'亮光模式：需為恆亮（如遇閃爍，需回工程模式訂單做修正）', critical:true, light:'恆亮', voice:'─'},
       ]
     }
   ],
