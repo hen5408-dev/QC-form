@@ -235,6 +235,43 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   font-family:var(--mono);box-shadow:0 2px 8px rgba(26,122,74,.3);
 }
 
+/* ── DASHBOARD ── */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.dash-product-card{
+  background:var(--white);border:1px solid var(--border);border-radius:14px;
+  padding:18px;cursor:pointer;transition:.2s;position:relative;overflow:hidden;
+}
+.dash-product-card:hover{border-color:var(--primary-l);box-shadow:0 4px 16px rgba(26,122,74,.1);transform:translateY(-2px)}
+.dash-product-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--primary)}
+.dash-product-card.has-fail::before{background:var(--danger)}
+.dash-product-card.all-pass::before{background:var(--ok)}
+.dpc-name{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.dpc-rate{font-size:32px;font-weight:900;font-family:var(--mono);margin-bottom:8px}
+.dpc-rate.rate-pass{color:var(--ok)}
+.dpc-rate.rate-fail{color:var(--danger)}
+.dpc-rate.rate-warn{color:var(--warn)}
+.dpc-rate.rate-none{color:var(--g400)}
+.dpc-row{display:flex;gap:8px;font-size:12px;flex-wrap:wrap}
+.dpc-pill{padding:3px 9px;border-radius:20px;font-weight:700}
+.dpc-pass{background:var(--ok-p);color:var(--ok)}
+.dpc-fail{background:var(--danger-p);color:var(--danger)}
+.dpc-review{background:var(--warn-p);color:var(--warn)}
+.dpc-total{background:var(--g100);color:var(--g600)}
+.dash-section-title{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.dash-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.dash-filter-btn{padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;background:var(--white);font-family:var(--font);color:var(--muted);transition:.15s}
+.dash-filter-btn:hover,.dash-filter-btn.active{border-color:var(--primary);color:var(--primary);background:var(--primary-p)}
+.dash-filter-btn.f-fail.active{border-color:var(--danger);color:var(--danger);background:var(--danger-p)}
+.history-table{width:100%;border-collapse:collapse;font-size:13px}
+.history-table th{background:var(--g50);padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap}
+.history-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.history-table tr:hover td{background:var(--g50)}
+.history-table tr.row-pass td{border-left:3px solid var(--ok)}
+.history-table tr.row-fail td{border-left:3px solid var(--danger);background:#fff8f8}
+.history-table tr.row-review td{border-left:3px solid var(--warn)}
+.ng-tag{display:inline-block;font-size:11px;background:var(--danger-p);color:var(--danger);padding:2px 7px;border-radius:5px;margin:1px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.last-update{font-size:12px;color:var(--muted);margin-left:auto}
+
 /* ── RESPONSIVE ── */
 @media(max-width:860px){
   .grid4,.grid3,.stats{grid-template-columns:1fr 1fr}
@@ -487,34 +524,88 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   </div>
 </section>
 
-<!-- ════════ SECTION 4：歷程分析 ════════ -->
+<!-- ════════ SECTION 4：Dashboard ════════ -->
 <section class="section" id="sec4">
-  <div class="card">
-    <div class="card-head"><div class="card-icon">📈</div><div><div class="card-title">QC 歷程分析</div><div class="card-sub">本機紀錄（最多 100 筆）</div></div></div>
-    <div class="stats" style="margin-bottom:20px">
-      <div class="stat"><div class="stat-label">總次數</div><div class="stat-val" id="hTotalCount" style="color:var(--text)">0</div></div>
+
+  <!-- 總覽數字 -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-head">
+      <div class="card-icon">📊</div>
+      <div><div class="card-title">QC Dashboard</div><div class="card-sub">本機紀錄（最多 100 筆）</div></div>
+      <span class="last-update" id="dashLastUpdate"></span>
+    </div>
+    <div class="stats" style="margin-bottom:0">
+      <div class="stat"><div class="stat-label">總測試</div><div class="stat-val" id="hTotalCount" style="color:var(--text)">0</div></div>
       <div class="stat stat-ok"><div class="stat-label">PASS</div><div class="stat-val" id="hPassCount">0</div></div>
       <div class="stat stat-ng"><div class="stat-label">FAIL</div><div class="stat-val" id="hFailCount">0</div></div>
       <div class="stat stat-warn"><div class="stat-label">需複檢</div><div class="stat-val" id="hReviewCount">0</div></div>
-      <div class="stat stat-primary"><div class="stat-label">通過率</div><div class="stat-val" id="hPassRate" style="color:var(--primary)">─</div></div>
+      <div class="stat stat-primary"><div class="stat-label">整體通過率</div><div class="stat-val" id="hPassRate" style="color:var(--primary)">─</div></div>
     </div>
-    <div class="grid2" style="margin-bottom:20px">
+  </div>
+
+  <!-- 各產品卡片 -->
+  <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">各產品 QC 結果</div>
+  <div class="dash-grid" id="dashProductGrid"></div>
+
+  <!-- 圖表 -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="grid2">
       <div>
-        <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">分類 NG 次數</div>
+        <div class="dash-section-title">📉 NG 項目分布</div>
         <div class="chart-bar-wrap" id="ngChart"></div>
       </div>
       <div>
-        <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">測試人員統計</div>
+        <div class="dash-section-title">👤 測試人員統計</div>
         <div class="chart-bar-wrap" id="testerChart"></div>
       </div>
     </div>
-    <hr class="divider"/>
-    <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">歷程記錄</div>
-    <div id="historyList"></div>
+  </div>
+
+  <!-- 歷程記錄表格 -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📋</div>
+      <div><div class="card-title">歷程記錄</div></div>
+    </div>
+    <!-- 篩選列 -->
+    <div class="dash-filter-bar">
+      <button class="dash-filter-btn active" onclick="filterHistory('all',this)">全部</button>
+      <button class="dash-filter-btn" onclick="filterHistory('PASS',this)">✅ PASS</button>
+      <button class="dash-filter-btn f-fail" onclick="filterHistory('FAIL',this)">❌ FAIL</button>
+      <button class="dash-filter-btn" onclick="filterHistory('需複檢',this)">🔄 需複檢</button>
+      <select id="dashProductFilter" onchange="filterHistory('product',this)" style="margin-left:auto;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);color:var(--muted);background:var(--white);cursor:pointer">
+        <option value="">所有產品</option>
+        <option value="gen6">第六代紅光</option>
+        <option value="gen4">第四代紅光</option>
+        <option value="nc108">NC108</option>
+        <option value="sanyi">三合一</option>
+        <option value="watch">智慧手錶</option>
+        <option value="ring">宏碁指環</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>QC ID</th>
+            <th>產品</th>
+            <th>序號 / 藍芽</th>
+            <th>韌體</th>
+            <th>測試人員</th>
+            <th>結果</th>
+            <th>OK</th>
+            <th>NG 項目</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+    <div id="historyEmpty" style="text-align:center;padding:32px;color:var(--muted);font-size:14px;display:none">尚無紀錄</div>
     <div class="actions" style="margin-top:16px">
-      <button class="btn btn-ghost" onclick="clearHistory()">🗑️ 清除本機歷程</button>
+      <button class="btn btn-ghost" onclick="clearHistory()">🗑️ 清除歷程</button>
       <button class="btn btn-ghost" onclick="exportAllJSON()">📥 匯出歷程 CSV</button>
-      <button class="btn btn-ghost" onclick="exportAllInventoryCSV()" style="border-color:var(--accent);color:var(--accent)">📦 匯出所有庫存格式</button>
+      <button class="btn btn-ghost" onclick="exportAllInventoryCSV()" style="border-color:var(--accent);color:var(--accent)">📦 匯出庫存格式</button>
     </div>
   </div>
 </section>
@@ -1207,58 +1298,150 @@ function exportAllInventoryCSV() {
 // ── HISTORY & ANALYSIS ──
 function renderHistory() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
-  const list = document.getElementById('historyList');
-
-  // Stats
-  const pass = history.filter(h=>h.final_status==='PASS').length;
-  const fail = history.filter(h=>h.final_status==='FAIL').length;
+  // ── 總覽數字 ──
+  const pass   = history.filter(h=>h.final_status==='PASS').length;
+  const fail   = history.filter(h=>h.final_status&&h.final_status.includes('FAIL')).length;
   const review = history.filter(h=>h.final_status==='需複檢').length;
-  document.getElementById('hTotalCount').textContent = history.length;
-  document.getElementById('hPassCount').textContent = pass;
-  document.getElementById('hFailCount').textContent = fail;
+  document.getElementById('hTotalCount').textContent  = history.length;
+  document.getElementById('hPassCount').textContent   = pass;
+  document.getElementById('hFailCount').textContent   = fail;
   document.getElementById('hReviewCount').textContent = review;
-  document.getElementById('hPassRate').textContent = history.length ? Math.round(pass/history.length*100)+'%' : '─';
+  document.getElementById('hPassRate').textContent    = history.length ? Math.round(pass/history.length*100)+'%' : '─';
 
-  // NG Chart
+  const now = new Date();
+  const upEl = document.getElementById('dashLastUpdate');
+  if (upEl) upEl.textContent = '更新：'+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+
+  // ── 各產品卡片 ──
+  const PROD_LABELS = {'gen6':'第六代紅光','gen4':'第四代紅光','nc108':'NC108','sanyi':'三合一','watch':'智慧手錶','ring':'宏碁指環'};
+  const PROD_KEYS   = Object.keys(PROD_LABELS);
+  const grid = document.getElementById('dashProductGrid');
+  if (grid) {
+    grid.innerHTML = PROD_KEYS.map(function(key) {
+      const name = PROD_LABELS[key];
+      const sub  = history.filter(function(h){ return (h.product_val||h.product_type||'')=== key; });
+      const total = sub.length;
+      const p = sub.filter(function(h){return h.final_status==='PASS';}).length;
+      const f = sub.filter(function(h){return h.final_status&&h.final_status.includes('FAIL');}).length;
+      const r = sub.filter(function(h){return h.final_status==='需複檢';}).length;
+      const rate = total ? Math.round(p/total*100) : null;
+      const rateText = rate===null ? '─' : rate+'%';
+      const rateClass = rate===null ? 'rate-none' : rate===100 ? 'rate-pass' : f>0 ? 'rate-fail' : 'rate-warn';
+      const cardClass = f>0 ? 'has-fail' : (rate===100&&total>0) ? 'all-pass' : '';
+      return '<div class="dash-product-card '+cardClass+'" onclick="setProductFilter(this.dataset.key)" data-key="'+key+'">'
+        +'<div class="dpc-name">'+name+'</div>'
+        +'<div class="dpc-rate '+rateClass+'">'+rateText+'</div>'
+        +'<div class="dpc-row">'
+        +(total>0 ? '<span class="dpc-pill dpc-total">共'+total+'筆</span>' : '<span class="dpc-pill dpc-total">尚無資料</span>')
+        +(p>0 ? '<span class="dpc-pill dpc-pass">✅ '+p+'</span>' : '')
+        +(f>0 ? '<span class="dpc-pill dpc-fail">❌ '+f+'</span>' : '')
+        +(r>0 ? '<span class="dpc-pill dpc-review">🔄 '+r+'</span>' : '')
+        +'</div></div>';
+    }).join('');
+  }
+
+  // ── NG 分布圖 ──
   const ngMap = {};
-  history.forEach(h=>{
-    (h.tests||[]).filter(t=>t.result==='NG').forEach(t=>{
-      const key = t.block||'其他';
-      ngMap[key]=(ngMap[key]||0)+1;
+  history.forEach(function(h){
+    (h.tests||[]).filter(function(t){return t.result==='NG';}).forEach(function(t){
+      const k = (t.block||'其他').replace(/^[A-Z]\. /,'');
+      ngMap[k]=(ngMap[k]||0)+1;
     });
   });
-  const maxNg = Math.max(...Object.values(ngMap),1);
-  document.getElementById('ngChart').innerHTML = Object.entries(ngMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,val])=>`
-    <div class="chart-row">
-      <div class="chart-label">${label.replace(/^[A-Z]\. /,'')}</div>
-      <div class="chart-track"><div class="chart-fill chart-fill-ng" style="width:${val/maxNg*100}%"></div></div>
-      <div class="chart-val">${val}</div>
-    </div>`).join('') || '<div style="font-size:13px;color:var(--muted)">尚無 NG 資料</div>';
+  const maxNg = Math.max.apply(null, Object.values(ngMap).concat([1]));
+  document.getElementById('ngChart').innerHTML = Object.entries(ngMap).sort(function(a,b){return b[1]-a[1];}).slice(0,8).map(function(e){
+    return '<div class="chart-row"><div class="chart-label">'+e[0]+'</div>'
+      +'<div class="chart-track"><div class="chart-fill chart-fill-ng" style="width:'+Math.round(e[1]/maxNg*100)+'%"></div></div>'
+      +'<div class="chart-val">'+e[1]+'</div></div>';
+  }).join('') || '<div style="font-size:13px;color:var(--muted)">尚無 NG 資料</div>';
 
-  // Tester Chart
+  // ── 測試人員圖 ──
   const tMap = {};
-  history.forEach(h=>{const t=h.tester||'未知';tMap[t]=(tMap[t]||0)+1;});
-  const maxT = Math.max(...Object.values(tMap),1);
-  document.getElementById('testerChart').innerHTML = Object.entries(tMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,val])=>`
-    <div class="chart-row">
-      <div class="chart-label">${label}</div>
-      <div class="chart-track"><div class="chart-fill" style="width:${val/maxT*100}%"></div></div>
-      <div class="chart-val">${val}</div>
-    </div>`).join('') || '<div style="font-size:13px;color:var(--muted)">尚無資料</div>';
+  history.forEach(function(h){const t=h.tester||'未知';tMap[t]=(tMap[t]||0)+1;});
+  const maxT = Math.max.apply(null, Object.values(tMap).concat([1]));
+  document.getElementById('testerChart').innerHTML = Object.entries(tMap).sort(function(a,b){return b[1]-a[1];}).slice(0,6).map(function(e){
+    return '<div class="chart-row"><div class="chart-label">'+e[0]+'</div>'
+      +'<div class="chart-track"><div class="chart-fill" style="width:'+Math.round(e[1]/maxT*100)+'%"></div></div>'
+      +'<div class="chart-val">'+e[1]+'</div></div>';
+  }).join('') || '<div style="font-size:13px;color:var(--muted)">尚無資料</div>';
 
-  // History list
-  if (!history.length) {
-    list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">尚無本機歷程紀錄</div>';
-    return;
+  // ── 歷程表格 ──
+  renderHistoryTable(history);
+}
+
+let _dashFilterStatus = 'all';
+let _dashFilterProduct = '';
+
+function setProductFilter(key) {
+  _dashFilterProduct = key;
+  document.getElementById('dashProductFilter').value = key;
+  _dashFilterStatus = 'all';
+  document.querySelectorAll('.dash-filter-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelector('.dash-filter-btn').classList.add('active');
+  renderHistoryTable(JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'));
+}
+
+function filterHistory(type, el) {
+  if (type === 'product') {
+    _dashFilterProduct = el.value;
+  } else {
+    _dashFilterStatus = type;
+    document.querySelectorAll('.dash-filter-btn').forEach(function(b){b.classList.remove('active');});
+    el.classList.add('active');
   }
-  list.innerHTML = history.map(h=>{
+  renderHistoryTable(JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'));
+}
+
+function renderHistoryTable(allHistory) {
+  const PROD_LABELS = {'gen6':'第六代紅光','gen4':'第四代紅光','nc108':'NC108','sanyi':'三合一','watch':'智慧手錶','ring':'宏碁指環'};
+  let filtered = allHistory;
+  if (_dashFilterProduct) {
+    filtered = filtered.filter(function(h){ return (h.product_val||h.product_type||'')=== _dashFilterProduct; });
+  }
+  if (_dashFilterStatus !== 'all') {
+    filtered = filtered.filter(function(h){
+      if (_dashFilterStatus==='FAIL') return h.final_status&&h.final_status.includes('FAIL');
+      return h.final_status===_dashFilterStatus;
+    });
+  }
+
+  const tbody = document.getElementById('historyTableBody');
+  const empty = document.getElementById('historyEmpty');
+  if (!filtered.length) {
+    tbody.innerHTML=''; empty.style.display='block'; return;
+  }
+  empty.style.display='none';
+
+  tbody.innerHTML = filtered.map(function(h) {
     const s = h.final_status||'─';
-    const cls = s==='PASS'?'h-pass':s.includes('FAIL')?'h-fail':s==='需複檢'?'h-review':'h-pending';
-    return `<div class="history-item">
-      <div class="h-id">${h.qc_id||'─'}</div>
-      <div class="h-info">${h.test_date||'─'} ｜ ${h.product_type||'─'} ｜ ${h.serial_no||'─'} ｜ ${h.tester||'─'}</div>
-      <div class="h-status ${cls}">${s}</div>
-    </div>`;
+    const rowCls = s==='PASS'?'row-pass':s.includes('FAIL')?'row-fail':s==='需複檢'?'row-review':'';
+    const statusBadge = s==='PASS'
+      ? '<span class="dpc-pill dpc-pass">✅ PASS</span>'
+      : s.includes('FAIL')
+      ? '<span class="dpc-pill dpc-fail">❌ FAIL</span>'
+      : s==='需複檢'
+      ? '<span class="dpc-pill dpc-review">🔄 需複檢</span>'
+      : '<span class="dpc-pill dpc-total">'+s+'</span>';
+    const tests = h.tests||[];
+    const ok  = tests.filter(function(t){return t.result==='OK';}).length;
+    const ngTests = tests.filter(function(t){return t.result==='NG';});
+    const ngTags = ngTests.slice(0,3).map(function(t){
+      return '<span class="ng-tag" title="'+(t.negName||t.item||'')+'">'+( (t.negName||t.item||'').substring(0,18) )+'</span>';
+    }).join('')+(ngTests.length>3?'<span class="ng-tag">+'+( ngTests.length-3)+'項</span>':'');
+    const btDisplay = h.bluetooth_name ? h.bluetooth_name : (h.serial_no||'─');
+    const prodLabel = PROD_LABELS[h.product_val||''] || PROD_LABELS[h.product_type||''] || (h.product_type||'─');
+
+    return '<tr class="'+rowCls+'">'
+      +'<td>'+( h.test_date||'─' )+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px;color:var(--primary)">'+( h.qc_id||'─' )+'</td>'
+      +'<td><span style="font-size:12px;font-weight:700">'+prodLabel+'</span></td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+btDisplay+'</td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+( h.fw_version||'─' )+'</td>'
+      +'<td>'+( h.tester||'─' )+'</td>'
+      +'<td>'+statusBadge+'</td>'
+      +'<td style="text-align:center;font-family:var(--mono)">'+ok+'</td>'
+      +'<td>'+(ngTags||'<span style="color:var(--g400);font-size:12px">─</span>')+'</td>'
+      +'</tr>';
   }).join('');
 }
 
