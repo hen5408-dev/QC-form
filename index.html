@@ -260,6 +260,37 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   font-family:var(--mono);box-shadow:0 2px 8px rgba(26,122,74,.3);
 }
 
+/* ── RESULT DETAIL ── */
+.result-detail-card{
+  border:1px solid var(--border);border-radius:12px;
+  margin-bottom:10px;overflow:hidden;transition:.15s;
+}
+.result-detail-card:hover{border-color:var(--primary-l);box-shadow:var(--shadow)}
+.rdc-head{
+  display:grid;grid-template-columns:auto 1fr auto auto;
+  align-items:center;gap:10px;padding:12px 16px;
+  background:var(--g50);cursor:pointer;
+}
+.rdc-head:hover{background:var(--primary-p)}
+.rdc-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.rdc-pass{background:var(--ok-p);color:var(--ok)}
+.rdc-ng{background:var(--danger-p);color:var(--danger)}
+.rdc-na{background:var(--g100);color:var(--g600)}
+.rdc-edit-btn{
+  padding:5px 14px;border-radius:8px;border:1.5px solid var(--primary);
+  background:var(--primary-p);color:var(--primary);font-size:12px;font-weight:700;
+  cursor:pointer;font-family:var(--font);white-space:nowrap;transition:.15s;
+}
+.rdc-edit-btn:hover{background:var(--primary);color:#fff}
+.rdc-body{padding:12px 16px;border-top:1px solid var(--border);display:none}
+.rdc-body.open{display:block}
+.rdc-item{display:flex;align-items:start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.rdc-item:last-child{border-bottom:none}
+.rdc-item-no{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-p);padding:1px 7px;border-radius:5px;flex-shrink:0;margin-top:2px}
+.rdc-item-name{flex:1;color:var(--text)}
+.rdc-item-ng{color:var(--danger);font-weight:700}
+.rdc-item-note{color:var(--muted);font-size:12px;margin-top:2px}
+
 /* ── STICKY TOP ── */
 .sticky-top{
   position:sticky;top:68px;z-index:90;
@@ -706,6 +737,11 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
     </div>
     <div style="text-align:center;padding:8px 0 20px">
       <div class="final-badge final-pending" id="finalBadge">⏳ 尚未完成</div>
+    </div>
+    <!-- 問題項目清單 -->
+    <div id="resultDetailWrap" style="margin-bottom:16px;display:none">
+      <div style="font-size:13px;font-weight:900;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">問題項目清單</div>
+      <div id="resultDetailList"></div>
     </div>
     <div class="field" style="margin-bottom:0">
       <label>總備註</label>
@@ -1271,6 +1307,7 @@ function calculate() {
   }
 
   checkAutoIncident(criticalNg);
+  renderResultDetail();
 }
 
 function checkAutoIncident(hasCriticalNg) {
@@ -1455,12 +1492,24 @@ function collectData() {
     saved_at: new Date().toISOString(),
     tests: []
   };
-  TEST_BLOCKS.forEach(block => {
-    block.items.forEach((item,i) => {
-      const key = `${block.id}_${i}`;
-      const checked = document.querySelector(`input[name="t_${key}"]:checked`);
-      const note = document.querySelector(`input[name="note_${key}"]`)?.value||'';
-      data.tests.push({no:item.no||'', block:block.label, item:item.name, critical:item.critical, result:checked?checked.value:'', note});
+  TEST_BLOCKS.forEach(function(block) {
+    block.items.forEach(function(item, i) {
+      const key = block.id + '_' + i;
+      const checked = document.querySelector('input[name="t_' + key + '"]:checked');
+      const note = document.querySelector('input[name="note_' + key + '"]')?.value || '';
+      // 取第3頁的備註（優先），沒有再取第2頁
+      const sumNote = document.getElementById('ng_sum_' + i)?.value || '';
+      const finalNote = sumNote || note;
+      const neg = (checked?.value === 'NG') ? negateItemName(item.name) : '';
+      data.tests.push({
+        no:       item.no || '',
+        block:    block.label,
+        item:     item.name,
+        negName:  neg,
+        critical: item.critical,
+        result:   checked ? checked.value : '',
+        note:     finalNote
+      });
     });
   });
   return data;
@@ -1623,6 +1672,98 @@ function exportAllInventoryCSV() {
   a.download = '儀器庫存_全部_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── 結果總覽：問題清單 ──
+function renderResultDetail() {
+  const wrap = document.getElementById('resultDetailWrap');
+  const list = document.getElementById('resultDetailList');
+  if (!wrap || !list) return;
+
+  const serial = document.getElementById('serialNo')?.value || '─';
+  const btSuffix = document.getElementById('btSuffix')?.value || '';
+  const btDisplay = btSuffix ? 'WB-' + btSuffix.toUpperCase() : serial;
+
+  // 收集 NG + 未測試項目，依工作區分組
+  const ngItems = [];
+  const naItems = [];
+
+  TEST_BLOCKS.forEach(function(block) {
+    block.items.forEach(function(item, i) {
+      const key = block.id + '_' + i;
+      const checked = document.querySelector('input[name="t_' + key + '"]:checked');
+      if (!checked) return;
+      const note = document.getElementById('ng_sum_' + i)?.value ||
+                   document.querySelector('input[name="note_' + key + '"]')?.value || '';
+      if (checked.value === 'NG') {
+        ngItems.push({ no: item.no, name: item.name, neg: negateItemName(item.name), note, critical: item.critical });
+      } else if (checked.value === 'NA') {
+        naItems.push({ no: item.no, name: item.name });
+      }
+    });
+  });
+
+  if (!ngItems.length && !naItems.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+
+  let html2 = '';
+
+  // NG 卡片
+  if (ngItems.length) {
+    html2 += '<div class="result-detail-card">';
+    html2 += '<div class="rdc-head" onclick="toggleRdc(this)">';
+    html2 += '<span style="font-size:16px">❌</span>';
+    html2 += '<div><div style="font-weight:900;font-size:14px">NG 項目</div>';
+    html2 += '<div style="font-size:12px;color:var(--muted)">序號：<span style="font-family:var(--mono)">' + serial + '</span>　藍芽：<span style="font-family:var(--mono)">' + btDisplay + '</span></div></div>';
+    html2 += '<span class="rdc-status rdc-ng">NG × ' + ngItems.length + '</span>';
+    html2 += '<button class="rdc-edit-btn" onclick="goToTestForFix(event)">✏️ 回填修正</button>';
+    html2 += '</div>';
+    html2 += '<div class="rdc-body open">';
+    ngItems.forEach(function(item) {
+      html2 += '<div class="rdc-item">';
+      html2 += '<span class="rdc-item-no">' + item.no + '</span>';
+      html2 += '<div>';
+      html2 += '<div class="rdc-item-ng">' + item.neg + (item.critical ? ' <span class="crit-tag">關鍵</span>' : '') + '</div>';
+      if (item.note) html2 += '<div class="rdc-item-note">備註：' + item.note + '</div>';
+      html2 += '</div></div>';
+    });
+    html2 += '</div></div>';
+  }
+
+  // 未測試卡片
+  if (naItems.length) {
+    html2 += '<div class="result-detail-card">';
+    html2 += '<div class="rdc-head" onclick="toggleRdc(this)">';
+    html2 += '<span style="font-size:16px">⏭️</span>';
+    html2 += '<div><div style="font-weight:900;font-size:14px">未測試項目</div>';
+    html2 += '<div style="font-size:12px;color:var(--muted)">序號：<span style="font-family:var(--mono)">' + serial + '</span>　藍芽：<span style="font-family:var(--mono)">' + btDisplay + '</span></div></div>';
+    html2 += '<span class="rdc-status rdc-na">未測試 × ' + naItems.length + '</span>';
+    html2 += '<button class="rdc-edit-btn" onclick="goToTestForFix(event)">✏️ 回填測試</button>';
+    html2 += '</div>';
+    html2 += '<div class="rdc-body">';
+    naItems.forEach(function(item) {
+      html2 += '<div class="rdc-item">';
+      html2 += '<span class="rdc-item-no">' + item.no + '</span>';
+      html2 += '<div class="rdc-item-name">' + item.name + '</div>';
+      html2 += '</div>';
+    });
+    html2 += '</div></div>';
+  }
+
+  list.innerHTML = html2;
+}
+
+function toggleRdc(head) {
+  const body = head.nextElementSibling;
+  if (body) body.classList.toggle('open');
+}
+
+function goToTestForFix(e) {
+  e.stopPropagation();
+  goSection(1);
 }
 
 // ── 快速儲存草稿 ──
