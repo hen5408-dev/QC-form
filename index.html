@@ -258,6 +258,14 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   font-family:var(--mono);box-shadow:0 2px 8px rgba(26,122,74,.3);
 }
 
+/* ── STICKY TOP ── */
+.sticky-top{
+  position:sticky;top:0;z-index:90;
+  background:var(--bg);
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding-bottom:4px;
+}
+
 /* ── AUTOSAVE ── */
 .autosave-bar{
   position:fixed;bottom:16px;right:20px;z-index:999;
@@ -442,26 +450,29 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
   <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
 </header>
 
-<!-- Workspace Bar -->
-<div class="ws-bar" id="wsBar">
-  <!-- tabs injected by JS -->
-  <button class="ws-add-btn" onclick="addWorkspace()">＋ 新增台次</button>
-</div>
-<div class="ws-divider"><hr class="ws-divider-line"></div>
+<!-- ══ STICKY TOP ZONE ══ -->
+<div class="sticky-top">
+  <!-- Workspace Bar -->
+  <div class="ws-bar" id="wsBar">
+    <!-- tabs injected by JS -->
+    <button class="ws-add-btn" onclick="addWorkspace()">＋ 新增台次</button>
+  </div>
+  <div class="ws-divider"><hr class="ws-divider-line"></div>
 
-<!-- Step Nav -->
-<nav class="step-nav" id="stepNav">
-  <div class="step active" id="step0" onclick="goSection(0)"><span class="step-num">1</span>基本資料</div>
-  <div class="step" id="step1" onclick="goSection(1)"><span class="step-num">2</span>測試項目</div>
-  <div class="step" id="step2" onclick="goSection(2)"><span class="step-num">3</span>異常紀錄</div>
-  <div class="step" id="step3" onclick="goSection(3)"><span class="step-num">4</span>結果總覽</div>
-  <div class="step" id="step4" onclick="goSection(4)"><span class="step-num">5</span>歷程分析</div>
-</nav>
+  <!-- Step Nav -->
+  <nav class="step-nav" id="stepNav">
+    <div class="step active" id="step0" onclick="goSection(0)"><span class="step-num">1</span>基本資料</div>
+    <div class="step" id="step1" onclick="goSection(1)"><span class="step-num">2</span>測試項目</div>
+    <div class="step" id="step2" onclick="goSection(2)"><span class="step-num">3</span>異常紀錄</div>
+    <div class="step" id="step3" onclick="goSection(3)"><span class="step-num">4</span>結果總覽</div>
+    <div class="step" id="step4" onclick="goSection(4)"><span class="step-num">5</span>歷程分析</div>
+  </nav>
+</div>
 
 <main>
 
 <!-- 暫存紀錄列（每頁頂部固定） -->
-<div id="quickSaveBar" style="max-width:1160px;margin:0 auto 14px;padding:0 24px">
+<div id="quickSaveBar" style="max-width:1160px;margin:0 auto 0;padding:0 24px;position:sticky;top:var(--sticky-offset,120px);z-index:89;background:var(--bg);padding-top:10px;padding-bottom:6px">
   <div style="display:flex;align-items:center;gap:10px;background:var(--blue-p);border:1.5px solid var(--blue-l);border-radius:12px;padding:10px 18px">
     <span style="font-size:14px;color:var(--muted)">📌 隨時暫存，不需填完</span>
     <button class="btn btn-ghost" onclick="quickSave()" style="padding:7px 16px;font-size:13px;display:flex;align-items:center;gap:6px">
@@ -550,7 +561,7 @@ main{max-width:1160px;margin:20px auto 60px;padding:0 24px}
 
 <!-- ════════ SECTION 1：測試項目 ════════ -->
 <section class="section" id="sec1">
-  <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--primary-p),#fff);border:1.5px solid var(--primary-l);border-radius:12px;padding:12px 20px;margin-bottom:14px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--primary-p),#fff);border:1.5px solid var(--primary-l);border-radius:12px;padding:10px 20px;margin-bottom:14px;flex-wrap:wrap;position:sticky;top:var(--sticky-offset2,172px);z-index:88;box-shadow:0 2px 8px rgba(26,122,74,.08)">
     <span style="font-size:20px">📦</span>
     <span style="font-size:13px;color:var(--muted);font-weight:700">目前測試產品</span>
     <span id="sec1ProductBadge" style="font-size:15px;font-weight:900;color:var(--primary-d);background:var(--primary-p);border:1.5px solid var(--primary-l);padding:4px 16px;border-radius:20px;margin-left:4px">─</span>
