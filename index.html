@@ -1325,9 +1325,13 @@ function goSection(idx) {
     const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
     showAutosave('saved', '已儲存 ' + t);
   }
-  // 進入測試項目時，先送基本資料到 Sheets（狀態：測試中）
+  // 進入測試項目時，只有第一次才送（避免重複新增）
   if (idx === 1) {
-    pushDraftToSheets();
+    const ws = workspaces[activeWsIdx];
+    if (ws && !ws._draftSent) {
+      ws._draftSent = true;
+      pushDraftToSheets();
+    }
   }
   document.querySelectorAll('.section').forEach((s,i) => {
     s.classList.toggle('active', i===idx);
@@ -1342,24 +1346,28 @@ function goSection(idx) {
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// 送基本資料暫存到 Sheets（測試中狀態）
+// 送基本資料暫存到 Sheets（測試中狀態，只送一次）
 async function pushDraftToSheets() {
   if (!APPS_SCRIPT_URL) return;
+  const sel = document.getElementById('productType');
+  const btSuffix = document.getElementById('btSuffix')?.value || '';
+  const btFull = btSuffix ? 'Wise Balance-' + btSuffix.toUpperCase() : (document.getElementById('btName')?.value || '');
   const data = {
     qc_id:          document.getElementById('qcId')?.value || '',
     test_date:      document.getElementById('testDate')?.value || '',
     tester:         document.getElementById('tester')?.value || '',
     site:           document.getElementById('site')?.value || '',
-    product_type:   document.getElementById('productType')?.options[document.getElementById('productType')?.selectedIndex]?.text || '',
-    product_val:    document.getElementById('productType')?.value || 'gen6',
+    product_type:   sel?.options[sel?.selectedIndex]?.text || '',
+    product_val:    sel?.value || 'gen6',
     serial_no:      document.getElementById('serialNo')?.value || '',
-    bluetooth_name: document.getElementById('btName')?.value || '',
+    bluetooth_name: btFull,
     machine_code:   document.getElementById('machineCode')?.value || '',
     fw_version:     document.getElementById('fwVersion')?.value || '',
     final_status:   '測試中',
     tests:          [],
     is_draft:       true,
   };
+  if (!data.qc_id) return;
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
